@@ -20,7 +20,7 @@
     "lib/**/*"
   ],
   "keywords": [],
-  "author": "",
+  "author": "Johnny.xu",
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^14.6.0",
