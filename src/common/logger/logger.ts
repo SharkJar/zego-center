@@ -2,11 +2,11 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-08-28 17:03:40
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-08-29 16:12:35
+ * @Last Modified time: 2020-09-10 10:50:29
  */
 import { configure, Log4js, Logger as Log4 } from 'log4js';
-import { ConfigService } from '../config/configService';
-import { Injectable } from '../injector/injectable';
+import { ConfigService } from 'zego-config';
+import { Injectable } from 'zego-injector';
 
 const loggerName = 'zookeeper-helper-sdk';
 let log4Instance!: Log4js;

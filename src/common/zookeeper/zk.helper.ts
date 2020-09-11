@@ -2,12 +2,12 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-08-25 14:00:41
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-09-01 11:41:45
+ * @Last Modified time: 2020-09-10 14:29:08
  */
 import { createClient, CreateMode, ACL, Permission, Id } from 'node-zookeeper-client';
-import { ConfigService } from '../config/configService';
 import { BusinessLogger } from '../logger/logger';
-import { Injectable } from '../injector/injectable';
+import { Injectable } from 'zego-injector';
+import { ConfigService } from 'zego-config';
 
 const empty = () => {};
 //zookeeper的辅助
@@ -380,15 +380,16 @@ export class ZkHelper implements zookeeperHelper {
    */
   public close() {
     this.logger.log('触发close');
+    const noop = function (){}
+    const client = this.client || { close:noop,removeAllListeners:noop }
+    
     try {
-      this.client.close();
+        // 关闭连接
+        client.close();
     } catch (err) {}
-    this.client.removeAllListeners('connected');
-    this.client.removeAllListeners('disconnected');
-    this.client.removeAllListeners('connectedReadOnly');
-    this.client.removeAllListeners('authenticationFailed');
-    this.client.removeAllListeners('expired');
-    this.client.removeAllListeners('state');
+
+    // 解绑事件
+    ['connected','disconnected','connectedReadOnly','authenticationFailed','expired','state'].forEach(client.removeAllListeners.bind(client))
     delete this.client;
   }
 }

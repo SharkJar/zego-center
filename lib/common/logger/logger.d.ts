@@ -1,5 +1,5 @@
 import { Logger as Log4 } from 'log4js';
-import { ConfigService } from '../config/configService';
+import { ConfigService } from 'zego-config';
 export declare class BusinessLogger {
     private config;
     context?: string;

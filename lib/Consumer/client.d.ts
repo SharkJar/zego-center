@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { ZkHelper } from '../common/zookeeper/zk.helper';
-import { ConfigService } from '../common/config/configService';
+import { ConfigService } from 'zego-config';
 import * as Event from 'events';
 import { BusinessLogger } from '../common/logger/logger';
 declare type subscibeConfig = {
@@ -17,14 +17,14 @@ export declare class CenterClient extends Event.EventEmitter {
     private distributionEvent;
     private wacherNode;
     private wacherData;
-    getNextServer(path: string): {
+    getNextServer(serverPath: string): {
         address: string;
         ip: string;
         port: number;
         weight: number;
     } | null | undefined;
     private listenerServer;
-    subscribe(params: subscibeConfig, listener: Function): Promise<unknown>;
+    subscribe(params: subscibeConfig, listener: Function, isNeedWacherWeight?: Boolean): Promise<unknown>;
     unSubscribe(params: subscibeConfig, listener?: Function): Promise<void>;
 }
 export {};

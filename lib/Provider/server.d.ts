@@ -1,5 +1,5 @@
 import { ZkHelper } from '../common/zookeeper/zk.helper';
-import { ConfigService } from '../common/config/configService';
+import { ConfigService } from 'zego-config';
 import { BusinessLogger } from '../common/logger/logger';
 declare type registerConfig = {
     systemName: string;
@@ -14,7 +14,10 @@ export declare class CenterService {
     private logger;
     private liveHeadTask;
     private nextHandler;
+    private isStartNextTick;
     constructor(helper: ZkHelper, config: ConfigService, logger: BusinessLogger);
+    stopNextTick(): void;
+    startNextTick(): void;
     private isBreakZk;
     private nextTick;
     register(params: registerConfig): Promise<unknown>;

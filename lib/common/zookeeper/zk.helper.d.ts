@@ -1,6 +1,6 @@
 import { ACL } from 'node-zookeeper-client';
-import { ConfigService } from '../config/configService';
 import { BusinessLogger } from '../logger/logger';
+import { ConfigService } from 'zego-config';
 export declare const ACLS: {
     OPEN_ACL_UNSAFE: ACL[];
     CREATOR_ALL_ACL: ACL[];

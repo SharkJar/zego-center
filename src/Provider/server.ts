@@ -2,13 +2,13 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-08-29 14:20:55
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-09-02 16:23:03
+ * @Last Modified time: 2020-09-11 12:04:40
  */
 import fastSafeStringify from 'fast-safe-stringify';
 import { CreateMode } from 'node-zookeeper-client';
 import { ZkHelper, ACLS } from '../common/zookeeper/zk.helper';
-import { Injectable } from '../common/injector/injectable';
-import { ConfigService } from '../common/config/configService';
+import { Injectable } from 'zego-injector';
+import { ConfigService } from 'zego-config';
 import { GetSystemWeight } from '../common/system/system.weight';
 import * as Path from 'path';
 import { BusinessLogger } from '../common/logger/logger';
@@ -31,9 +31,18 @@ export class CenterService {
   //用于定时和zookeeper同步数据
   private liveHeadTask: Map<string, any> = new Map();
   private nextHandler!: NodeJS.Timeout;
+  private isStartNextTick: boolean = true
 
   constructor(private helper: ZkHelper, private config: ConfigService, private logger: BusinessLogger) {
     this.nextTick();
+  }
+
+  public stopNextTick(){
+    this.isStartNextTick = false
+  }
+
+  public startNextTick(){
+    this.isStartNextTick = true
   }
 
   /**
@@ -53,9 +62,10 @@ export class CenterService {
     const tasks = Array.from(this.liveHeadTask.values());
     //等待下一次循环
     this.nextHandler = setTimeout(this.nextTick.bind(this), 20000);
-    if (tasks.length >= 0) {
+    if (tasks.length >= 0 && this.isStartNextTick) {
       //获取服务器的最新权重
       const { weight, cpu, avg5, avg15, heap } = await GetSystemWeight();
+
       //写入日志
       this.logger.log(
         `[CenterService-isBreakZk] \r\n 当前服务器情况:cpu使用率:${cpu},avg5:${avg5},avg15:${avg15},node内存使用率:${heap}`,
