@@ -502,8 +502,8 @@
         "affectsGlobalScope": false
       },
       "../src/provider/server.ts": {
-        "version": "f9ee5dacf02233f537668ec9bead30ae9c51633d57221e63b0dd61e0d67ac578",
-        "signature": "aa8fc974e049cb87f16a0e4faa52b7fc094fe4a519354f8d383b3188465f7c78",
+        "version": "468144219495285b105691468a0b6e8b9a5d5b694e22ebc1fb78066fbd882c18",
+        "signature": "3d7ac3648cd3cb7a6937f7bbb3f9e2f0c3462bee29931366daa4c56e5e893ebc",
         "affectsGlobalScope": false
       },
       "../src/common/balancers/balance.manage.interface.ts": {
@@ -522,18 +522,13 @@
         "affectsGlobalScope": false
       },
       "../src/consumer/client.ts": {
-        "version": "a9de65999d4145c89d0cbb27a068ae4df1188c5d24a4ccc16927153aa399625a",
+        "version": "4f42e45667cc75fb3e20358aaac1a029b60566ec0a77732279e4df7d2e1ccc7e",
         "signature": "4b0a2b591a0489c5ada9efc0c444bbfaaba280aeb6ae1978c6376889fcf2bc7d",
         "affectsGlobalScope": false
       },
       "../src/index.ts": {
-        "version": "d708d2da487a5416d81a55be67df35508188041de9e6aaac1b86fe1509653d97",
+        "version": "6238eac436ac1e6a44cc67d5fafcf44fd490f45a08dad24024e8f519e7a69020",
         "signature": "48dae0a7032c7329c41a6e11997c8e96bff3ac8423486db472053f2b0fbd2153",
-        "affectsGlobalScope": false
-      },
-      "../src/__tests__/main.test.ts": {
-        "version": "24df2593d775385105776e8aa0a4c60735b97038f60e43ace15b143cee388469",
-        "signature": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
         "affectsGlobalScope": false
       },
       "../src/common/balancers/balance. round.robin.ts": {
@@ -694,6 +689,7 @@
       "outDir": "./",
       "baseUrl": "..",
       "incremental": true,
+      "project": "../tsconfig.json",
       "configFilePath": "../tsconfig.json"
     },
     "referencedMap": {
@@ -1896,18 +1892,6 @@
         "../node_modules/@types/node/ts3.4/fs.d.ts",
         "../node_modules/@types/node/ts3.4/process.d.ts",
         "../node_modules/@types/node/ts3.4/util.d.ts"
-      ],
-      "../src/__tests__/main.test.ts": [
-        "../node_modules/@types/graceful-fs/index.d.ts",
-        "../node_modules/@types/node/ts3.1/fs.d.ts",
-        "../node_modules/@types/node/ts3.1/process.d.ts",
-        "../node_modules/@types/node/ts3.1/util.d.ts",
-        "../node_modules/@types/node/ts3.4/fs.d.ts",
-        "../node_modules/@types/node/ts3.4/process.d.ts",
-        "../node_modules/@types/node/ts3.4/util.d.ts",
-        "../src/consumer/client.ts",
-        "../src/index.ts",
-        "../src/provider/server.ts"
       ],
       "../src/common/balancers/balance. round.robin.ts": [
         "../node_modules/@types/graceful-fs/index.d.ts",
@@ -3469,7 +3453,6 @@
       "../node_modules/zego-injector/lib/index.d.ts",
       "../node_modules/zego-injector/lib/paramdecorator.d.ts",
       "../node_modules/zego-injector/lib/propdecorator.d.ts",
-      "../src/__tests__/main.test.ts",
       "../src/common/balancers/balance. round.robin.ts",
       "../src/common/balancers/balance.base.ts",
       "../src/common/balancers/balance.consistent.hash.ts",

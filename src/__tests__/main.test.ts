@@ -23,7 +23,7 @@ describe('Injector test', () => {
     client = CenterServer.createClient(config,logger)
     await client.subscribe(
       {
-        serviceName: 'user-center',
+        serviceName: 'user-center-v1',
         systemName: '/test-zk',
       },
       (server: any) => console.log(server),
@@ -35,19 +35,19 @@ describe('Injector test', () => {
   it("CenterService",async () => {
     service = CenterServer.createService(config,logger)
     await service.register({
-      serviceName: 'user-center',
+      serviceName: 'user-center-v1',
       serverIP: '127.0.0.1',
       serverPort: 80,
-      systemName: '/test-zk',
+      systemName: '/test-zk'
     });
     await service.register({
-      serviceName: 'user-center',
+      serviceName: 'user-center-v1',
       serverIP: '127.0.0.1',
       serverPort: 8080,
       systemName: '/test-zk',
     });
     await service.register({
-      serviceName: 'user-center',
+      serviceName: 'user-center-v1',
       serverIP: '127.0.0.1',
       serverPort: 8081,
       systemName: '/test-zk',
@@ -58,7 +58,7 @@ describe('Injector test', () => {
 })
 
 
-afterAll(async done => {
-  service.stopNextTick()
-  done();
-});
+// afterAll(async done => {
+//   service.stopNextTick()
+//   done();
+// });

@@ -1,6 +1,6 @@
 {
-  "name": "zego-registo",
-  "version": "1.0.0",
+  "name": "zego-registor",
+  "version": "1.0.1",
   "description": "",
   "main": "lib/index.js",
   "scripts": {
@@ -19,12 +19,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SharkJar/zego-registo.git"
+    "url": "git+https://github.com/SharkJar/zego-registor.git"
   },
   "bugs": {
-    "url": "https://github.com/SharkJar/zego-registo/issues"
+    "url": "https://github.com/SharkJar/zego-registor/issues"
   },
-  "homepage": "https://github.com/SharkJar/zego-registo",
+  "homepage": "https://github.com/SharkJar/zego-registor",
   "keywords": [],
   "author": "Johnny.xu",
   "license": "ISC",

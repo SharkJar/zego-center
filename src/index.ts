@@ -1,3 +1,9 @@
+/*
+ * @Author: Johnny.xushaojia 
+ * @Date: 2020-09-14 18:06:16 
+ * @Last Modified by:   Johnny.xushaojia 
+ * @Last Modified time: 2020-09-14 18:06:16 
+ */
 import { CenterService } from './Provider/server'
 import { CenterClient } from './Consumer/client'
 import { BusinessLogger } from './common/logger/logger';

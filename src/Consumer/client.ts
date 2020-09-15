@@ -2,7 +2,7 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-09-01 10:50:22
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-09-11 10:58:27
+ * @Last Modified time: 2020-09-11 18:14:49
  */
 import { ZkHelper } from '../common/zookeeper/zk.helper';
 import { Injectable } from 'zego-injector';
@@ -198,9 +198,14 @@ export class CenterClient extends Event.EventEmitter {
     const list = listener as any;
     list.handler && clearTimeout(list.handler);
     list.handler = setTimeout(() => {
-      const server = this.getNextServer(serverPath);
-      listener(server);
-      resolve && resolve(server);
+      let server
+      try{
+        server = this.getNextServer(serverPath);
+        listener(server);
+        resolve && resolve(server);
+      }catch(err){
+        reject && reject(err)
+      }
       resolve = reject = null;
     }, 3000);
     return new Promise((res, rej) => {

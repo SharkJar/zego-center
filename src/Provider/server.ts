@@ -45,6 +45,10 @@ export class CenterService {
     this.isStartNextTick = true
   }
 
+  public isNeedBreakZK(cpu: number, avg5: number, avg15: number, heap: number){
+    return this.isBreakZk(cpu,avg5,avg15,heap)
+  }
+
   /**
    * 根据负载情况 返回是否断开zk连接
    */
@@ -71,12 +75,11 @@ export class CenterService {
         `[CenterService-isBreakZk] \r\n 当前服务器情况:cpu使用率:${cpu},avg5:${avg5},avg15:${avg15},node内存使用率:${heap}`,
       );
       //判断是否需要断开zk
-      const isNeedBreak = this.isBreakZk(cpu, avg5, avg15, heap);
+      const isNeedBreak = this.isNeedBreakZK(cpu, avg5, avg15, heap);
       //断开zk 当前注册节点会跟着一起删除
       if (isNeedBreak) {
         return await this.helper.close();
       }
-
       //日志
       this.logger.log(
         `[CenterService-nextTick] \r\n 当前调用注册中心的task:${JSON.stringify(tasks)},当前的weight:${weight}`,

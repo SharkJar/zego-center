@@ -7,6 +7,7 @@ declare type registerConfig = {
     serverIP: string;
     serverPort: number;
     weight?: number;
+    isBreakZK?: Function;
 };
 export declare class CenterService {
     private helper;
