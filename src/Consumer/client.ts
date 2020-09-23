@@ -73,7 +73,6 @@ export class CenterClient extends Event.EventEmitter {
     // 用于记录老的关系  用于判断增删改
     const childMap: Map<string, node> | undefined = this.nodes.get(path);
     const children: string[] = (await this.helper.getChildren(path, this.wacherNode.bind(this, path))) as string[];
-
     // 没有节点的处理逻辑
     if (!children || !Array.isArray(children) || children.length <= 0) {
       // 删除节点
@@ -221,17 +220,20 @@ export class CenterClient extends Event.EventEmitter {
   public async subscribe(params: subscibeConfig, listener: Function, isNeedWacherWeight: Boolean = false) {
     const { systemName, serviceName } = params;
     const serverPath = Path.join(systemName, serviceName);
+    try{
+      // 进行节点监听 并且获取子节点数据
+      await this.wacherNode(serverPath);
 
-    // 进行节点监听 并且获取子节点数据
-    await this.wacherNode(serverPath);
+      // 监听分发事件
+      this.on(`${eventName.CHILDNODE_DELETE}:${serverPath}`, this.listenerServer.bind(this, serverPath, listener));
+      this.on(`${eventName.CHILDNODE_ADD}:${serverPath}`, this.listenerServer.bind(this, serverPath, listener));
+      isNeedWacherWeight && this.on(`${eventName.CHILDNODE_UPDATE}:${serverPath}`,this.listenerServer.bind(this,serverPath,listener))
 
-    // 监听分发事件
-    this.on(`${eventName.CHILDNODE_DELETE}:${serverPath}`, this.listenerServer.bind(this, serverPath, listener));
-    this.on(`${eventName.CHILDNODE_ADD}:${serverPath}`, this.listenerServer.bind(this, serverPath, listener));
-    isNeedWacherWeight && this.on(`${eventName.CHILDNODE_UPDATE}:${serverPath}`,this.listenerServer.bind(this,serverPath,listener))
-
-    // 当所有数据准备完毕之后 开始监听事件 以及计算权重获取服务节点
-    return await this.listenerServer(serverPath, listener);
+      // 当所有数据准备完毕之后 开始监听事件 以及计算权重获取服务节点
+      return await this.listenerServer(serverPath, listener);
+    }catch(err){
+      throw err
+    }
   }
 
   /**

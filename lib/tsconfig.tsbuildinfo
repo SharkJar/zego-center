@@ -502,8 +502,8 @@
         "affectsGlobalScope": false
       },
       "../src/provider/server.ts": {
-        "version": "468144219495285b105691468a0b6e8b9a5d5b694e22ebc1fb78066fbd882c18",
-        "signature": "3d7ac3648cd3cb7a6937f7bbb3f9e2f0c3462bee29931366daa4c56e5e893ebc",
+        "version": "ff24de5db7043fc644840f6f1747dc309bdb7721bd8bcdc4b9d0a05942543c20",
+        "signature": "aa9a6f60edd08968f39155d117e7c6334c1f7e5a073fa9f08710a026816b61e9",
         "affectsGlobalScope": false
       },
       "../src/common/balancers/balance.manage.interface.ts": {
@@ -522,7 +522,7 @@
         "affectsGlobalScope": false
       },
       "../src/consumer/client.ts": {
-        "version": "4f42e45667cc75fb3e20358aaac1a029b60566ec0a77732279e4df7d2e1ccc7e",
+        "version": "bda73eefe1dd03334fff4095a109f5f60896a1403b7ac87002e3f8c0ef053a70",
         "signature": "4b0a2b591a0489c5ada9efc0c444bbfaaba280aeb6ae1978c6376889fcf2bc7d",
         "affectsGlobalScope": false
       },
@@ -689,7 +689,6 @@
       "outDir": "./",
       "baseUrl": "..",
       "incremental": true,
-      "project": "../tsconfig.json",
       "configFilePath": "../tsconfig.json"
     },
     "referencedMap": {

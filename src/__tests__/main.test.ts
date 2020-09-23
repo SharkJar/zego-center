@@ -4,7 +4,7 @@ import { CenterService } from '../Provider/server'
 
 
 const config = new Map()
-let logger:any = { log(logText:any){ } }
+let logger:any = { log(logText:any){ console.log(logText) } }
 let client!:CenterClient
 let service!:CenterService
 
@@ -19,12 +19,25 @@ describe('Injector test', () => {
     config.set("LOGGERROOT","./nest-log")
   })
 
+
+  it("CenterService",async () => {
+    service = CenterServer.createService(config,logger)
+
+    await service.register({
+      serviceName: 'user-center-v2',
+      serverIP: '127.0.0.1',
+      serverPort: 80,
+      systemName: '/test-zk-v2'
+    });
+    expect(service).not.toBeNull()
+  })
+  
   it('CenterClient',async () => {
     client = CenterServer.createClient(config,logger)
     await client.subscribe(
       {
-        serviceName: 'user-center-v1',
-        systemName: '/test-zk',
+        serviceName: 'user-center-v2',
+        systemName: '/test-zk-v2',
       },
       (server: any) => console.log(server),
     );
@@ -32,28 +45,7 @@ describe('Injector test', () => {
     expect(client).not.toBeNull()
   })
 
-  it("CenterService",async () => {
-    service = CenterServer.createService(config,logger)
-    await service.register({
-      serviceName: 'user-center-v1',
-      serverIP: '127.0.0.1',
-      serverPort: 80,
-      systemName: '/test-zk'
-    });
-    await service.register({
-      serviceName: 'user-center-v1',
-      serverIP: '127.0.0.1',
-      serverPort: 8080,
-      systemName: '/test-zk',
-    });
-    await service.register({
-      serviceName: 'user-center-v1',
-      serverIP: '127.0.0.1',
-      serverPort: 8081,
-      systemName: '/test-zk',
-    });
-    expect(service).not.toBeNull()
-  })
+  
 
 })
 

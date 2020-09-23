@@ -7,7 +7,6 @@ declare type registerConfig = {
     serverIP: string;
     serverPort: number;
     weight?: number;
-    isBreakZK?: Function;
 };
 export declare class CenterService {
     private helper;
@@ -19,6 +18,7 @@ export declare class CenterService {
     constructor(helper: ZkHelper, config: ConfigService, logger: BusinessLogger);
     stopNextTick(): void;
     startNextTick(): void;
+    isNeedBreakZK(cpu: number, avg5: number, avg15: number, heap: number): boolean;
     private isBreakZk;
     private nextTick;
     register(params: registerConfig): Promise<unknown>;
