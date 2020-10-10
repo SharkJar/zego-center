@@ -192,7 +192,7 @@ export class CenterClient extends Event.EventEmitter {
    * @param serverPath
    * @param listener
    */
-  private async listenerServer(serverPath: string, listener: Function) {
+  private async listenerServer(serverPath: string, listener: Function, polling: number = 3 * 60 * 1000) {
     let resolve: Function | null, reject: Function | null;
     const list = listener as any;
     list.handler && clearTimeout(list.handler);
@@ -206,7 +206,7 @@ export class CenterClient extends Event.EventEmitter {
         reject && reject(err)
       }
       resolve = reject = null;
-    }, 3000);
+    }, polling);
     return new Promise((res, rej) => {
       (resolve = res), (reject = rej);
     });
