@@ -2,12 +2,13 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-08-25 14:00:41
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-09-10 14:29:08
+ * @Last Modified time: 2020-10-14 16:31:00
  */
 import { createClient, CreateMode, ACL, Permission, Id } from 'node-zookeeper-client';
 import { BusinessLogger } from '../logger/logger';
 import { Injectable } from 'zego-injector';
 import { ConfigService } from 'zego-config';
+import { Observable,Subject,BehaviorSubject } from 'rxjs'
 
 const empty = () => {};
 //zookeeper的辅助
@@ -22,26 +23,26 @@ export const ACLS = {
   READ_ACL_UNSAFE: [new ACL(Permission.READ, IDS.ANYONE_ID_UNSAFE)],
 };
 
-interface zookeeperHelper {
-  [key: string]: any;
-  createServer(): any;
-  create(path: string, data: string, acls: any[], mode: number): Promise<unknown>;
-  connect(): Promise<unknown>;
-  setData(path: string, data?: string, version?: number): Promise<unknown>;
-  getData(path: string, watcher?: Function): Promise<unknown>;
-  close(): void;
-  getState(): unknown;
-  setACL(path: string, acls?: any[], version?: number): Promise<unknown>;
-  getACL(path: string): Promise<unknown>;
-  listSubTreeBFS(path: string): Promise<unknown>;
-  mkdirp(path: string, data?: string, acls?: any[], mode?: number): Promise<unknown>;
-  remove(path: string, version?: number): Promise<unknown>;
-  exists(path: string, watcher?: Function): Promise<boolean>;
-  getChildren(path: string, watcher?: Function): Promise<unknown>;
-}
+// interface zookeeperHelper {
+//   [key: string]: any;
+//   createServer(): any;
+//   create(path: string, data: string, acls: any[], mode: number): Promise<unknown>;
+//   connect(): Promise<unknown>;
+//   setData(path: string, data?: string, version?: number): Promise<unknown>;
+//   getData(path: string, watcher?: Function): Promise<unknown>;
+//   close(): void;
+//   getState(): unknown;
+//   setACL(path: string, acls?: any[], version?: number): Promise<unknown>;
+//   getACL(path: string): Promise<unknown>;
+//   listSubTreeBFS(path: string): Promise<unknown>;
+//   mkdirp(path: string, data?: string, acls?: any[], mode?: number): Promise<unknown>;
+//   remove(path: string, version?: number): Promise<unknown>;
+//   exists(path: string, watcher?: Function): Promise<boolean>;
+//   getChildren(path: string, watcher?: Function): Promise<unknown>;
+// }
 
 @Injectable()
-export class ZkHelper implements zookeeperHelper {
+export class ZkHelper {
   //方便字典
   [name: string]: any;
   //zookeeper client
@@ -166,12 +167,19 @@ export class ZkHelper implements zookeeperHelper {
    * @param watcher
    */
   public getChildren(path: string, watcher?: Function): Promise<unknown> {
-    let resolve: Function, reject: Function;
+    let resolve: Function | null = null, reject: Function | null = null;
     this.client.getChildren(path, watcher, (error: any, children: any) => {
       if (error) {
-        return reject(error);
+        if(typeof reject === "function"){
+          reject(error);
+        }else{
+          typeof watcher === "function" && watcher("error")
+        }
+        reject = null,resolve = null;
+        return 
       }
-      resolve(children);
+      typeof resolve === "function" && resolve(children);
+      reject = null,resolve = null;
     });
     return new Promise((res, rej) => {
       (resolve = res), (reject = rej);
@@ -253,12 +261,19 @@ export class ZkHelper implements zookeeperHelper {
    * @param watcher
    */
   public exists(path: string, watcher?: Function): Promise<boolean> {
-    let resolve: Function, reject: Function;
+    let resolve: Function | null = null, reject: Function | null = null;
     this.client.exists(path, watcher, (error: any, state: any) => {
       if (error) {
-        return reject(error);
+        if(typeof reject === "function"){
+          reject(error);
+        }else{
+          typeof watcher === "function" && watcher("error")
+        }
+        reject = null,resolve = null;
+        return 
       }
-      resolve(!!state);
+      typeof resolve === "function" && resolve(!!state);
+      reject = null,resolve = null;
     });
     return new Promise((res, rej) => {
       (resolve = res), (reject = rej);
@@ -290,12 +305,19 @@ export class ZkHelper implements zookeeperHelper {
    * @param watcher
    */
   public getData(path: string, watcher?: Function): Promise<unknown> {
-    let resolve: Function, reject: Function;
+    let resolve: Function | null = null, reject: Function | null = null;
     this.client.getData(path, watcher, (error: any, data: any) => {
       if (error) {
-        return reject(error);
+        if(typeof reject === "function"){
+          reject(error);
+        }else{
+          typeof watcher === "function" && watcher("error")
+        }
+        reject = null,resolve = null;
+        return 
       }
-      resolve(data.toString('utf8'));
+      typeof resolve === "function" && resolve(data.toString('utf8'));
+      reject = null,resolve = null;
     });
     return new Promise((res, rej) => {
       (resolve = res), (reject = rej);

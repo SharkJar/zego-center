@@ -2,7 +2,7 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-09-01 10:50:22
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-09-11 18:14:49
+ * @Last Modified time: 2020-10-14 16:40:12
  */
 import { ZkHelper } from '../common/zookeeper/zk.helper';
 import { Injectable } from 'zego-injector';
@@ -65,14 +65,27 @@ export class CenterClient extends Event.EventEmitter {
     });
   }
 
+  
   /**
    * 监听一个服务节点
    * @param path
    */
   private async wacherNode(path: string) {
+    // 有可能节点不存在 所以我们等待多少秒之后 在继续监听
+    this.wacherNodeHandler && clearTimeout(this.wacherNodeHandler)
     // 用于记录老的关系  用于判断增删改
     const childMap: Map<string, node> | undefined = this.nodes.get(path);
-    const children: string[] = (await this.helper.getChildren(path, this.wacherNode.bind(this, path))) as string[];
+    
+    let children: string[] = []
+    try{
+      children = (await this.helper.getChildren(path, this.wacherNode.bind(this, path))) as string[];
+    }catch(err){
+      // 等待3秒之后 从新获取 看看节点是否正常 或者节点是否已经注册了
+      this.wacherNodeHandler = setTimeout(this.wacherNode.bind(this, path),3000)
+      // 不在执行下面逻辑
+      return
+    }
+    
     // 没有节点的处理逻辑
     if (!children || !Array.isArray(children) || children.length <= 0) {
       // 删除节点
@@ -141,9 +154,9 @@ export class CenterClient extends Event.EventEmitter {
     const currentChild = childrenNode?.get(child) || { data: null };
 
     const childPath = Path.join(nodePath, child);
-    // 获取数据 并且添加监听方法
-    const data: string = (await this.helper.getData(childPath, this.wacherData.bind(this, nodePath, child))) as string;
     try {
+      // 获取数据 并且添加监听方法
+      const data: string = (await this.helper.getData(childPath, this.wacherData.bind(this, nodePath, child))) as string;
       // 转换对象
       const result = JSON.parse(data);
       // 看看数据是否有改变 有改变就触发update事件
@@ -160,7 +173,10 @@ export class CenterClient extends Event.EventEmitter {
       childrenNode?.set(child, { node: child, nodePath, data: result });
 
       return result;
-    } catch (err) {}
+    } catch (err) { 
+      // 发生错误 删除本地数据
+      childrenNode?.delete(child)
+    }
 
     // JSON转换错误 直接返回null
     return null;
@@ -192,7 +208,7 @@ export class CenterClient extends Event.EventEmitter {
    * @param serverPath
    * @param listener
    */
-  private async listenerServer(serverPath: string, listener: Function, polling: number = 3 * 60 * 1000) {
+  private async listenerServer(serverPath: string, listener: Function, polling: number = 5 * 1000) {
     let resolve: Function | null, reject: Function | null;
     const list = listener as any;
     list.handler && clearTimeout(list.handler);
