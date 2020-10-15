@@ -2,7 +2,7 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-09-01 10:50:22
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-10-14 16:40:12
+ * @Last Modified time: 2020-10-15 15:20:03
  */
 import { ZkHelper } from '../common/zookeeper/zk.helper';
 import { Injectable } from 'zego-injector';
@@ -81,27 +81,21 @@ export class CenterClient extends Event.EventEmitter {
       children = (await this.helper.getChildren(path, this.wacherNode.bind(this, path))) as string[];
     }catch(err){
       // 等待3秒之后 从新获取 看看节点是否正常 或者节点是否已经注册了
+      // 让他处理删除节点逻辑
       this.wacherNodeHandler = setTimeout(this.wacherNode.bind(this, path),3000)
-      // 不在执行下面逻辑
-      return
     }
     
     // 没有节点的处理逻辑
     if (!children || !Array.isArray(children) || children.length <= 0) {
       // 删除节点
       this.nodes.delete(path);
-      // 如果之前已经存在的有节点 那么触发的是删除事件
-      const isExistsNode = childMap?.size && childMap?.size > 0;
-      // 触发事件
-      if (isExistsNode) {
-        const childrenPath = Array.from(childMap?.keys() || []);
-        // 触发一个总事件
-        this.emit(eventName.NODE_CHILD_DELETE, { nodePath: path, childrenPath });
-        // 触发单独的事件
-        childrenPath.forEach((childPath) =>
-          this.emit(eventName.CHILDNODE_DELETE, { nodePath: path, childPath, childData: childMap?.get(childPath) }),
-        );
-      }
+      const childrenPath = Array.from(childMap?.keys() || []);
+      // 触发一个总事件
+      this.emit(eventName.NODE_CHILD_DELETE, { nodePath: path, childrenPath });
+      // 触发单独的事件
+      childrenPath.forEach((childPath) =>
+        this.emit(eventName.CHILDNODE_DELETE, { nodePath: path, childPath, childData: childMap?.get(childPath) }),
+      );
       return;
     }
 
@@ -241,6 +235,7 @@ export class CenterClient extends Event.EventEmitter {
       await this.wacherNode(serverPath);
 
       // 监听分发事件
+      this.on(`${eventName.NODE_CHILD_DELETE}:${serverPath}`,this.listenerServer.bind(this, serverPath, listener))
       this.on(`${eventName.CHILDNODE_DELETE}:${serverPath}`, this.listenerServer.bind(this, serverPath, listener));
       this.on(`${eventName.CHILDNODE_ADD}:${serverPath}`, this.listenerServer.bind(this, serverPath, listener));
       isNeedWacherWeight && this.on(`${eventName.CHILDNODE_UPDATE}:${serverPath}`,this.listenerServer.bind(this,serverPath,listener))
