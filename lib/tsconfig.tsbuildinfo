@@ -842,12 +842,12 @@
         "affectsGlobalScope": false
       },
       "../src/consumer/client.ts": {
-        "version": "f33c527afd0b26c12d7e3a984f5b4a6723f0ba8a4cbef10534ac4b4f5bb5db9b",
+        "version": "05938eea6b68b961c84ab7f8063583bfe5b444595706a93346ae1f9e1cc64d6a",
         "signature": "4b0a2b591a0489c5ada9efc0c444bbfaaba280aeb6ae1978c6376889fcf2bc7d",
         "affectsGlobalScope": false
       },
       "../src/index.ts": {
-        "version": "bd52e496b1dcfe879ff70296d978b4be20ae1e5731cf0781064e8f2387425155",
+        "version": "0f4b3920328569feac4a3f0f05658328ec56e4775c7b38e77d755bad324f1153",
         "signature": "48dae0a7032c7329c41a6e11997c8e96bff3ac8423486db472053f2b0fbd2153",
         "affectsGlobalScope": false
       },

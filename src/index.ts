@@ -2,7 +2,7 @@
  * @Author: Johnny.xushaojia 
  * @Date: 2020-09-14 18:06:16 
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-10-15 15:16:56
+ * @Last Modified time: 2020-10-16 11:24:15
  */
 import { CenterService } from './Provider/server'
 import { CenterClient } from './Consumer/client'
@@ -54,23 +54,3 @@ export class CenterServer{
         return Factory.create<CenterClient>(CenterClient);
     }
 }
-
-
-
-(async function (){
-    const config = new Map()
-    let logger:any = { log(logText:any){ console.log(logText) } }
-    config.set("SERVERS","192.168.100.72:2181,192.168.100.62:2181")
-    config.set("SESSIONTIMEOUT","30000")
-    config.set("SPINDELAY","1000")
-    config.set("RETRIES","0")
-    config.set("LOGGERROOT","./nest-log")
-    const client = CenterServer.createClient(config,logger)
-
-    client.subscribe({
-        systemName:"/zego-center",
-        serviceName:"abc"
-    },(server:any) => {
-        console.log("server:",server)
-    })
-})()
