@@ -842,7 +842,7 @@
         "affectsGlobalScope": false
       },
       "../src/consumer/client.ts": {
-        "version": "b3daf0cbc46428f70e6de761ed3af693b25f9b4e9b2ab6643a7a4304dd0a7340",
+        "version": "d6e5bef80ef9637a04ec2aef2d9889bb2d13fb7803cfc2db738908ea956d7f0a",
         "signature": "4b0a2b591a0489c5ada9efc0c444bbfaaba280aeb6ae1978c6376889fcf2bc7d",
         "affectsGlobalScope": false
       },

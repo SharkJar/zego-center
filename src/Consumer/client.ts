@@ -2,7 +2,7 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-09-01 10:50:22
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-10-22 10:09:44
+ * @Last Modified time: 2020-10-28 15:10:44
  */
 import { ZkHelper } from '../common/zookeeper/zk.helper';
 import { Injectable } from 'zego-injector';
@@ -215,9 +215,9 @@ export class CenterClient extends Event.EventEmitter {
           // 第一次进入
           (typeof list.prevServer === "undefined") ||
           // 服务器被清空
-          (server == null && list.prevServer != null) || 
+          (server == null && list.prevServer != null) 
           // 服务器变化
-          (server != null && list.prevServer != null && server.address != list.prevServer.address)
+          // || (server != null && list.prevServer != null && server.address != list.prevServer.address)
         ){
           list(server);
         }
