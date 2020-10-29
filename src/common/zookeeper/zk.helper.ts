@@ -8,7 +8,7 @@ import { createClient, CreateMode, ACL, Permission, Id } from 'node-zookeeper-cl
 import { BusinessLogger } from '../logger/logger';
 import { Injectable } from 'zego-injector';
 import { ConfigService } from 'zego-config';
-import { Observable,Subject,BehaviorSubject } from 'rxjs'
+import { Observable, Subject, BehaviorSubject } from 'rxjs';
 
 const empty = () => {};
 //zookeeper的辅助
@@ -167,19 +167,20 @@ export class ZkHelper {
    * @param watcher
    */
   public getChildren(path: string, watcher?: Function): Promise<unknown> {
-    let resolve: Function | null = null, reject: Function | null = null;
+    let resolve: Function | null = null,
+      reject: Function | null = null;
     this.client.getChildren(path, watcher, (error: any, children: any) => {
       if (error) {
-        if(typeof reject === "function"){
+        if (typeof reject === 'function') {
           reject(error);
-        }else{
-          typeof watcher === "function" && watcher("error")
+        } else {
+          typeof watcher === 'function' && watcher('error');
         }
-        reject = null,resolve = null;
-        return 
+        (reject = null), (resolve = null);
+        return;
       }
-      typeof resolve === "function" && resolve(children);
-      reject = null,resolve = null;
+      typeof resolve === 'function' && resolve(children);
+      (reject = null), (resolve = null);
     });
     return new Promise((res, rej) => {
       (resolve = res), (reject = rej);
@@ -261,19 +262,20 @@ export class ZkHelper {
    * @param watcher
    */
   public exists(path: string, watcher?: Function): Promise<boolean> {
-    let resolve: Function | null = null, reject: Function | null = null;
+    let resolve: Function | null = null,
+      reject: Function | null = null;
     this.client.exists(path, watcher, (error: any, state: any) => {
       if (error) {
-        if(typeof reject === "function"){
+        if (typeof reject === 'function') {
           reject(error);
-        }else{
-          typeof watcher === "function" && watcher("error")
+        } else {
+          typeof watcher === 'function' && watcher('error');
         }
-        reject = null,resolve = null;
-        return 
+        (reject = null), (resolve = null);
+        return;
       }
-      typeof resolve === "function" && resolve(!!state);
-      reject = null,resolve = null;
+      typeof resolve === 'function' && resolve(!!state);
+      (reject = null), (resolve = null);
     });
     return new Promise((res, rej) => {
       (resolve = res), (reject = rej);
@@ -305,19 +307,20 @@ export class ZkHelper {
    * @param watcher
    */
   public getData(path: string, watcher?: Function): Promise<unknown> {
-    let resolve: Function | null = null, reject: Function | null = null;
+    let resolve: Function | null = null,
+      reject: Function | null = null;
     this.client.getData(path, watcher, (error: any, data: any) => {
       if (error) {
-        if(typeof reject === "function"){
+        if (typeof reject === 'function') {
           reject(error);
-        }else{
-          typeof watcher === "function" && watcher("error")
+        } else {
+          typeof watcher === 'function' && watcher('error');
         }
-        reject = null,resolve = null;
-        return 
+        (reject = null), (resolve = null);
+        return;
       }
-      typeof resolve === "function" && resolve(data.toString('utf8'));
-      reject = null,resolve = null;
+      typeof resolve === 'function' && resolve(data.toString('utf8'));
+      (reject = null), (resolve = null);
     });
     return new Promise((res, rej) => {
       (resolve = res), (reject = rej);
@@ -402,16 +405,18 @@ export class ZkHelper {
    */
   public close() {
     this.logger.log('触发close');
-    const noop = function (){}
-    const client = this.client || { close:noop,removeAllListeners:noop }
-    
+    const noop = function () {};
+    const client = this.client || { close: noop, removeAllListeners: noop };
+
     try {
-        // 关闭连接
-        client.close();
+      // 关闭连接
+      client.close();
     } catch (err) {}
 
     // 解绑事件
-    ['connected','disconnected','connectedReadOnly','authenticationFailed','expired','state'].forEach(client.removeAllListeners.bind(client))
+    ['connected', 'disconnected', 'connectedReadOnly', 'authenticationFailed', 'expired', 'state'].forEach(
+      client.removeAllListeners.bind(client),
+    );
     delete this.client;
   }
 }

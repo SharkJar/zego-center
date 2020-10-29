@@ -2,7 +2,7 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-09-01 10:50:22
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-10-28 15:10:44
+ * @Last Modified time: 2020-10-29 19:31:41
  */
 import { ZkHelper } from '../common/zookeeper/zk.helper';
 import { Injectable } from 'zego-injector';
@@ -11,6 +11,8 @@ import * as Path from 'path';
 import * as Event from 'events';
 import { BusinessLogger } from '../common/logger/logger';
 import { WeightRoundRobin } from '../common/balancers/balance.weight.round.robin';
+import { Subject, interval, from, Subscription, merge, fromEvent, of } from 'rxjs';
+import { retry, tap, switchMap, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 type subscibeConfig = {
   // 属于哪个系统
@@ -19,12 +21,19 @@ type subscibeConfig = {
   serviceName: string;
 };
 
+type wacherParams = {
+  path: string;
+  subscribe?: Subject<any>;
+  timer?: number;
+};
+
 type nodeData = { ip: string; port: number; weight: number };
 
 type node = {
   node: string;
   nodePath: string;
-  data: nodeData;
+  data: nodeData | null;
+  subscribe: Subscription;
 };
 
 enum eventName {
@@ -40,11 +49,12 @@ export class CenterClient extends Event.EventEmitter {
   // 用于字典
   [name: string]: any;
   // 用于记录哪些正在被监听的
-  private nodes: Map<string, Map<string, node>> = new Map();
+  private nodes: Map<string, { subscribe?: Subscription; childMap: Map<string, node> }> = new Map();
 
   constructor(private helper: ZkHelper, private config: ConfigService, private logger: BusinessLogger) {
     super();
     this.distributionEvent();
+    this.defaultTimer = 1500;
   }
 
   /**
@@ -65,115 +75,40 @@ export class CenterClient extends Event.EventEmitter {
     });
   }
 
-  
   /**
-   * 监听一个服务节点
-   * @param path
+   * 对外 监听服务 并且拿到最新的 服务器
+   * @param params
+   * @param listener
    */
-  private async wacherNode(path: string) {
-    // 有可能节点不存在 所以我们等待多少秒之后 在继续监听
-    this.wacherNodeHandler && clearTimeout(this.wacherNodeHandler)
-    // 用于记录老的关系  用于判断增删改
-    const childMap: Map<string, node> | undefined = this.nodes.get(path);
-    
-    let children: string[] = []
-    try{
-      children = (await this.helper.getChildren(path, this.wacherNode.bind(this, path))) as string[];
-    }catch(err){
-      // 等待3秒之后 从新获取 看看节点是否正常 或者节点是否已经注册了
-      // 让他处理删除节点逻辑
-      this.wacherNodeHandler = setTimeout(this.wacherNode.bind(this, path),3000)
-    }
-    
-    // 没有节点的处理逻辑
-    if (!children || !Array.isArray(children) || children.length <= 0) {
-      // 删除节点
-      this.nodes.delete(path);
-      const childrenPath = Array.from(childMap?.keys() || []);
-      // 触发一个总事件
-      this.emit(eventName.NODE_CHILD_DELETE, { nodePath: path, childrenPath });
-      // 触发单独的事件
-      childrenPath.forEach((childPath) =>
-        this.emit(eventName.CHILDNODE_DELETE, { nodePath: path, childPath, childData: childMap?.get(childPath) }),
-      );
-      return;
-    }
+  public async subscribe(params: subscibeConfig, listener: Function, isNeedWacherWeight: Boolean = false) {
+    const { systemName, serviceName } = params;
+    const serverPath = Path.join(systemName, serviceName);
+    // 监听节点 触发事件
+    this.subscribeWacherNode(serverPath);
 
-    // 重新初始化一个map
-    this.nodes.set(path, new Map());
-    // 找到被删除的节点
-    const delNode = Array.from(childMap?.keys() || []).filter((child) => !children.includes(child));
-    // 找到新增加的节点
-    const addNode = children.filter((child) => !childMap?.has(child));
-    // 触发事件
-    if (delNode.length > 0) {
-      // 触发一个总事件
-      // 节点删除事件  childrenPath是子节点的路径不包含数据
-      this.emit(eventName.NODE_CHILD_DELETE, { nodePath: path, childrenPath: delNode });
-      // 触发单独事件
-      delNode.forEach((childPath) =>
-        this.emit(eventName.CHILDNODE_DELETE, { nodePath: path, childPath, childData: childMap?.get(childPath) }),
-      );
-    }
-    // 触发一个总的 添加事件
-    if (addNode.length > 0) {
-      // 触发一个总事件
-      // 节点添加事件  childrenPath是子节点的路径不包含数据
-      this.emit(eventName.NODE_CHILD_ADD, { nodePath: path, childrenPath: addNode });
-      // 触发单独事件
-      await Promise.all(
-        addNode.map(async (child) => {
-          const data = await this.wacherData(path, child);
-          // 触发单独的添加事件
-          this.emit(eventName.CHILDNODE_ADD, { nodePath: path, childPath: child, childData: data });
+    const events = [
+      fromEvent(this, `${eventName.NODE_CHILD_DELETE}:${serverPath}`),
+      fromEvent(this, `${eventName.CHILDNODE_DELETE}:${serverPath}`),
+      fromEvent(this, `${eventName.CHILDNODE_ADD}:${serverPath}`),
+    ];
+    // 如果需要权重计算
+    isNeedWacherWeight && events.push(fromEvent(this, `${eventName.CHILDNODE_UPDATE}:${serverPath}`));
+
+    merge(...events)
+      .pipe(
+        debounceTime(300),
+        // 获取最新地址
+        switchMap((sender) => of(this.getNextServer(serverPath))),
+        // 去重
+        distinctUntilChanged((prevServer, nextServer) => {
+          return JSON.stringify(prevServer) == JSON.stringify(nextServer);
         }),
-      );
-    }
-
-    // 已存在的子节点 进行数据更新
-    await Promise.all(children.filter((child) => !addNode.includes(child)).map(this.wacherData.bind(this, path)));
-  }
-
-  /**
-   * 监听一个 服务的子节点
-   * @param nodePath
-   * @param child
-   */
-  private async wacherData(nodePath: string, child: string) {
-    // 已经取消监听了
-    if (!this.nodes.has(nodePath)) {
-      return;
-    }
-    const childrenNode = this.nodes.get(nodePath);
-    const currentChild = childrenNode?.get(child) || { data: null };
-
-    const childPath = Path.join(nodePath, child);
-    try {
-      // 获取数据 并且添加监听方法
-      const data: string = (await this.helper.getData(childPath, this.wacherData.bind(this, nodePath, child))) as string;
-      // 转换对象
-      const result = JSON.parse(data);
-      // 看看数据是否有改变 有改变就触发update事件
-      if (data !== JSON.stringify(currentChild.data)) {
-        // 触发单独的添加事件
-        this.emit(eventName.CHILDNODE_UPDATE, {
-          nodePath,
-          childPath: child,
-          prevChildData: currentChild.data,
-          childData: result,
-        });
-      }
-      // 更新本地数据
-      childrenNode?.set(child, { node: child, nodePath, data: result });
-
-      return result;
-    } catch (err) { 
-      // 发生错误 删除本地数据
-      childrenNode?.delete(child)
-    }
-
-    // JSON转换错误 直接返回null
-    return null;
+        // 触发回调
+        tap((sender) => typeof listener === 'function' && listener(sender)),
+        // 错误 重新监听
+        retry(),
+      )
+      .subscribe();
   }
 
   /**
@@ -184,79 +119,18 @@ export class CenterClient extends Event.EventEmitter {
    */
   public getNextServer(serverPath: string) {
     const childNodeMap = this.nodes.get(serverPath);
-    const serverList = Array.from(childNodeMap?.values() || []).map((sender) => {
-      const { data } = sender;
-      return { address: `${data.ip}:${data.port}`, ip: data.ip, port: data.port, weight: data.weight };
-    });
+    const serverList = Array.from(childNodeMap?.childMap?.values() || [])
+      .filter((sender) => sender.data)
+      .map((sender) => {
+        const { ip, port, weight } = sender.data || { ip: '', port: 0, weight: 0 };
+        return { address: `${ip}:${port}`, ip, port, weight };
+      });
     if (!serverList || !Array.isArray(serverList) || serverList.length <= 0) {
       return null;
     }
-    // console.log(`当前的${path} serverList`, serverList);
     const balanceHelper = new WeightRoundRobin(serverList, 1);
     const nextServerIP = balanceHelper.getAddress();
     return serverList.find((sender) => sender.address === nextServerIP);
-  }
-
-  /**
-   * 防抖 获取最新的服务器地址
-   * @param serverPath
-   * @param listener
-   */
-  private listenerServer(serverPath: string, listener: Function, polling: number = 5 * 1000) {
-    let resolve: Function | null, reject: Function | null;
-    const list = listener as any;
-    list.handler && clearTimeout(list.handler);
-    list.handler = setTimeout(() => {
-      let server
-      try{
-        server = this.getNextServer(serverPath);
-
-        if(
-          // 第一次进入
-          (typeof list.prevServer === "undefined") ||
-          // 服务器被清空
-          (server == null && list.prevServer != null) 
-          // 服务器变化
-          // || (server != null && list.prevServer != null && server.address != list.prevServer.address)
-        ){
-          list(server);
-        }
-
-        list.prevServer = server
-        resolve && resolve(server);
-      }catch(err){
-        reject && reject(err)
-      }
-      resolve = reject = null;
-    }, list.prevServer? polling : 500);
-    return new Promise((res, rej) => {
-      (resolve = res), (reject = rej);
-    });
-  }
-
-  /**
-   * 对外 监听服务 并且拿到最新的 服务器
-   * @param params
-   * @param listener
-   */
-  public async subscribe(params: subscibeConfig, listener: Function, isNeedWacherWeight: Boolean = false) {
-    const { systemName, serviceName } = params;
-    const serverPath = Path.join(systemName, serviceName);
-    try{
-      // 进行节点监听 并且获取子节点数据
-      await this.wacherNode(serverPath);
-
-      // 监听分发事件
-      this.on(`${eventName.NODE_CHILD_DELETE}:${serverPath}`,this.listenerServer.bind(this, serverPath, listener))
-      this.on(`${eventName.CHILDNODE_DELETE}:${serverPath}`, this.listenerServer.bind(this, serverPath, listener));
-      this.on(`${eventName.CHILDNODE_ADD}:${serverPath}`, this.listenerServer.bind(this, serverPath, listener));
-      isNeedWacherWeight && this.on(`${eventName.CHILDNODE_UPDATE}:${serverPath}`,this.listenerServer.bind(this,serverPath,listener))
-
-      // 当所有数据准备完毕之后 开始监听事件 以及计算权重获取服务节点
-      return await this.listenerServer(serverPath, listener);
-    }catch(err){
-      throw err
-    }
   }
 
   /**
@@ -270,5 +144,231 @@ export class CenterClient extends Event.EventEmitter {
     this.removeAllListeners(`${eventName.CHILDNODE_DELETE}:${serverPath}`);
     this.removeAllListeners(`${eventName.CHILDNODE_ADD}:${serverPath}`);
     this.removeAllListeners(`${eventName.CHILDNODE_UPDATE}:${serverPath}`);
+    this.unsunscribeNode(serverPath);
+  }
+
+  /**
+   * 取消监听节点
+   * @param nodePath
+   */
+  public unsunscribeNode(nodePath: string) {
+    // 根节点不存在
+    if (!this.nodes.has(nodePath)) {
+      return;
+    }
+    // 拿到subscribe
+    const { subscribe, childMap } = this.nodes.get(nodePath) || {};
+    // 子节点删除监听
+    if (typeof childMap !== 'undefined' && childMap instanceof Map) {
+      // 删除数据节点的监听
+      const children = Array.from(childMap.values());
+      // 引用类型 所以可以直接删除
+      children.forEach(({ node, data }) => {
+        // 停止监听
+        this.unsubscribeData(nodePath, node);
+      });
+    }
+    // 执行unsubscribe
+    subscribe && typeof subscribe.unsubscribe === 'function' && subscribe.unsubscribe();
+    // 删除
+    this.nodes.delete(nodePath);
+  }
+
+  /**
+   * 取消监听数据
+   * @param nodePath
+   * @param child
+   */
+  public unsubscribeData(nodePath: string, child: string) {
+    // 根节点不存在
+    if (!this.nodes.has(nodePath)) {
+      return;
+    }
+    // 拿到childMap
+    const { childMap } = this.nodes.get(nodePath) || {};
+    // data节点不存在
+    if (!(childMap instanceof Map) || !childMap?.has(child)) {
+      return;
+    }
+    // 拿到data的subscribe
+    const { subscribe } = childMap?.get(child) || {};
+    // 执行unsubscribe
+    subscribe && typeof subscribe.unsubscribe === 'function' && subscribe.unsubscribe();
+    // 删除nodeData
+    childMap.delete(child);
+  }
+
+  /**
+   * 监听child的变化
+   * @param path
+   * @param child
+   */
+  public subscribeWacherData(path: string, child: string) {
+    // 已经被取消监听 所以不需要在继续监听data了
+    if (!this.nodes.has(path)) {
+      return;
+    }
+    // 获取根节点数据
+    const nodeSender = this.nodes.get(path) || { childMap: null };
+    // 获取data节点的映射
+    const childMap: Map<string, node> = (nodeSender.childMap = nodeSender.childMap || new Map());
+    // 已经被监听过 不在重复监听
+    if (childMap.has(child)) {
+      return childMap.get(child)?.subscribe;
+    }
+    const subscribe = new Subject();
+    const dataSubscribe = this.wacherData({ path: Path.join(path, child), subscribe });
+    const dataSender = { nodePath: path, node: child, subscribe: dataSubscribe, data: null };
+    // 数据回调
+    const dataCallback = (data: any) => {
+      try {
+        // 转换对象
+        const result = JSON.parse(data);
+        // 看看数据是否有改变 有改变就触发update事件
+        if (data !== JSON.stringify(dataSender.data)) {
+          // 触发单独的添加事件
+          this.emit(eventName.CHILDNODE_UPDATE, {
+            path,
+            childPath: child,
+            prevChildData: dataSender.data,
+            childData: result,
+          });
+        }
+        // 更新本地数据
+        dataSender.data = result;
+      } catch (err) {}
+    };
+    subscribe.pipe(tap(dataCallback)).subscribe({
+      next: (value) => {
+        //this.logger.log(value,"subscribeWacherData")
+      },
+    });
+    // 记录已经被监听
+    childMap.set(child, dataSender);
+    // 返回subscribe
+    return dataSubscribe;
+  }
+
+  /**
+   * 监听节点的变化
+   * @param path
+   */
+  public subscribeWacherNode(path: string) {
+    // 已经被监听过 不在重复监听
+    if (this.nodes.has(path)) {
+      return this.nodes.get(path)?.subscribe;
+    }
+    const subscribe = new Subject();
+    const nodeSubscribe = this.wacherNode({ path, subscribe });
+    const nodeSender = { subscribe: nodeSubscribe, childMap: new Map() };
+    // 节点数据回调
+    const childrenCallback = (children: any) => {
+      // 没有节点的处理逻辑
+      if (!children || !Array.isArray(children) || children.length <= 0) {
+        const children = Array.from(nodeSender.childMap.values());
+        // 引用类型 所以可以直接删除
+        children.forEach(({ node, data }) => {
+          // 停止监听
+          this.unsubscribeData(path, node);
+          // 删除
+          nodeSender.childMap.delete(node);
+          // 触发事件
+          this.emit(eventName.CHILDNODE_DELETE, { nodePath: path, childPath: node, childData: data });
+        });
+        // 清空map
+        nodeSender.childMap = new Map();
+        // 触发一个总事件
+        this.emit(eventName.NODE_CHILD_DELETE, { nodePath: path, childrenPath: children });
+        // 停止往下执行
+        return;
+      }
+
+      // 找到被删除的节点
+      const delNode = Array.from(nodeSender.childMap?.keys() || []).filter((child) => {
+        // 计算是否被删除的
+        const result = !children.includes(child);
+        // 触发单独事件 删除事件
+        this.emit(eventName.CHILDNODE_DELETE, {
+          nodePath: path,
+          childPath: child,
+          childData: nodeSender.childMap?.get(child),
+        });
+        // 返回过滤结果
+        return result;
+      });
+      // 找到新增加的节点
+      const addNode = children.filter((child) => {
+        // 计算是否被添加的
+        const result = !nodeSender.childMap?.has(child);
+        // 进行监听数据
+        this.subscribeWacherData(path, child);
+        // 触发单独的添加事件 添加事件
+        this.emit(eventName.CHILDNODE_ADD, { nodePath: path, childPath: child });
+        // 返回过滤结果
+        return result;
+      });
+
+      // 触发事件
+      if (delNode.length > 0) {
+        // 触发一个总事件
+        // 节点删除事件  childrenPath是子节点的路径不包含数据
+        this.emit(eventName.NODE_CHILD_DELETE, { nodePath: path, childrenPath: delNode });
+      }
+      // 触发一个总的 添加事件
+      if (addNode.length > 0) {
+        // 触发一个总事件
+        // 节点添加事件  childrenPath是子节点的路径不包含数据
+        this.emit(eventName.NODE_CHILD_ADD, { nodePath: path, childrenPath: addNode });
+      }
+    };
+    subscribe.pipe(tap(childrenCallback)).subscribe({
+      next: (value) => {
+        //this.logger.log(value,"subscribeWacherNode")
+      },
+    });
+    // 记录已经被监听
+    this.nodes.set(path, nodeSender);
+    // 返回subscribe
+    return nodeSubscribe;
+  }
+
+  /**
+   * 原始监听
+   * @param sender
+   */
+  private wacherData(sender: wacherParams) {
+    const { timer = this.defaultTimer, subscribe, path } = sender;
+    return interval(timer)
+      .pipe(
+        // 获取最新节点
+        switchMap((num) => from(this.helper.getData(path))),
+        // 处理拿到的节点数据
+        tap((data: any) => {
+          console.log(data, 'wacherData');
+        }),
+        // 报错重新监听
+        retry(),
+      )
+      .subscribe(subscribe);
+  }
+
+  /**
+   * 原始监听
+   * @param sender
+   */
+  private wacherNode(sender: wacherParams) {
+    const { timer = this.defaultTimer, subscribe, path } = sender;
+    return interval(timer)
+      .pipe(
+        // 获取最新节点
+        switchMap((num) => from(this.helper.getChildren(path))),
+        // 处理拿到的节点数据
+        tap((children: any) => {
+          console.log(children, 'wacherNode');
+        }),
+        // 报错重新监听
+        retry(),
+      )
+      .subscribe(subscribe);
   }
 }

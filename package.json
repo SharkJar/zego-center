@@ -1,13 +1,12 @@
 {
   "name": "zego-registor",
-  "version": "1.0.14",
+  "version": "1.0.16",
   "description": "",
   "main": "lib/index.js",
   "scripts": {
     "postversion": "git push && git push --tags",
     "version": "npm run format && git add -A src",
     "preversion": "npm run lint",
-    
     "prepare": "npm run build",
     "test": "jest --config jestconfig.json",
     "build": "tsc",
@@ -46,6 +45,7 @@
     "log4js": "^6.3.0",
     "node-zookeeper-client": "^1.1.0",
     "reflect-metadata": "^0.1.13",
+    "rxjs": "^6.6.3",
     "zego-config": "^1.0.0",
     "zego-injector": "^1.0.3"
   }

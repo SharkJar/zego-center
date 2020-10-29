@@ -31,22 +31,22 @@ export class CenterService {
   //用于定时和zookeeper同步数据
   private liveHeadTask: Map<string, any> = new Map();
   private nextHandler!: NodeJS.Timeout;
-  private isStartNextTick: boolean = true
+  private isStartNextTick: boolean = true;
 
   constructor(private helper: ZkHelper, private config: ConfigService, private logger: BusinessLogger) {
     this.nextTick();
   }
 
-  public stopNextTick(){
-    this.isStartNextTick = false
+  public stopNextTick() {
+    this.isStartNextTick = false;
   }
 
-  public startNextTick(){
-    this.isStartNextTick = true
+  public startNextTick() {
+    this.isStartNextTick = true;
   }
 
-  public isNeedBreakZK(cpu: number, avg5: number, avg15: number, heap: number){
-    return this.isBreakZk(cpu,avg5,avg15,heap)
+  public isNeedBreakZK(cpu: number, avg5: number, avg15: number, heap: number) {
+    return this.isBreakZk(cpu, avg5, avg15, heap);
   }
 
   /**
@@ -56,7 +56,7 @@ export class CenterService {
     //cpu大于等于0.8
     //avg5和avg15大于等于0.85
     //heap大于等于0.85
-    return cpu >= 0.8 || avg5 > 0.85 || avg15 > 0.85 //|| heap > 0.85;
+    return cpu >= 0.8 || avg5 > 0.85 || avg15 > 0.85; //|| heap > 0.85;
   }
   /**
    * 定时任务 20s 一次
@@ -65,7 +65,7 @@ export class CenterService {
     this.nextHandler && clearTimeout(this.nextHandler);
     const tasks = Array.from(this.liveHeadTask.values());
     //等待下一次循环
-    this.nextHandler = setTimeout(this.nextTick.bind(this,polling), polling);
+    this.nextHandler = setTimeout(this.nextTick.bind(this, polling), polling);
     if (tasks.length >= 0 && this.isStartNextTick) {
       //获取服务器的最新权重
       const { weight, cpu, avg5, avg15, heap } = await GetSystemWeight();
