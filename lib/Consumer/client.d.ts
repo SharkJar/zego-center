@@ -3,10 +3,11 @@ import { ZkHelper } from '../common/zookeeper/zk.helper';
 import { ConfigService } from 'zego-config';
 import * as Event from 'events';
 import { BusinessLogger } from '../common/logger/logger';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 declare type subscibeConfig = {
     systemName: string;
     serviceName: string;
+    isNeedWacherWeight?: boolean;
 };
 export declare class CenterClient extends Event.EventEmitter {
     private helper;
@@ -16,14 +17,14 @@ export declare class CenterClient extends Event.EventEmitter {
     private nodes;
     constructor(helper: ZkHelper, config: ConfigService, logger: BusinessLogger);
     private distributionEvent;
-    subscribe(params: subscibeConfig, listener: Function, isNeedWacherWeight?: Boolean): Promise<void>;
+    subscribe(params: subscibeConfig, listener: Function | Subject<any>, isNeedWacherWeight?: boolean): void;
     getNextServer(serverPath: string): {
         address: string;
         ip: string;
         port: number;
         weight: number;
     } | null | undefined;
-    unSubscribe(params: subscibeConfig, listener?: Function): Promise<void>;
+    unSubscribe(params: subscibeConfig, listener?: Function): void;
     unsunscribeNode(nodePath: string): void;
     unsubscribeData(nodePath: string, child: string): void;
     subscribeWacherData(path: string, child: string): Subscription | undefined;

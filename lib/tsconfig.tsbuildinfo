@@ -1362,12 +1362,12 @@
         "affectsGlobalScope": false
       },
       "../src/consumer/client.ts": {
-        "version": "f6c568c591e56f6408b818848ca3002763802b051bd756cd73ae87c458fa0729",
-        "signature": "205c2f9770787513f675b44bf898e268f60f17756406f63494409537c523bcb2",
+        "version": "bcbd650acf27170211dd7e41d054d831a0e89a05df62e0a88636e77103ac5dd5",
+        "signature": "b864020a9033a0ea303c9e883d71273b5107211eb5f7be9bd7319dd74caa3f17",
         "affectsGlobalScope": false
       },
       "../src/index.ts": {
-        "version": "1de0042a05183024a6ae4d93049893d8762bb2fd6e0ecaa482bcf462b7fc5959",
+        "version": "e25d1ccdb3dc5c6245194bf35d839fa21a6669dda0e145537523f83f0bc716cd",
         "signature": "48dae0a7032c7329c41a6e11997c8e96bff3ac8423486db472053f2b0fbd2153",
         "affectsGlobalScope": false
       },
