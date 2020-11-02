@@ -13,13 +13,13 @@ export declare class CenterService {
     private config;
     private logger;
     private liveHeadTask;
-    private nextHandler;
-    private isStartNextTick;
+    private systemWeiget;
+    private systemState;
     constructor(helper: ZkHelper, config: ConfigService, logger: BusinessLogger);
-    stopNextTick(): void;
-    startNextTick(): void;
     isNeedBreakZK(cpu: number, avg5: number, avg15: number, heap: number): boolean;
     private isBreakZk;
+    private intervalSystemState;
+    private intervalSystemWeight;
     private nextTick;
     register(params: registerConfig): Promise<unknown>;
     unregister(params: registerConfig): Promise<unknown>;

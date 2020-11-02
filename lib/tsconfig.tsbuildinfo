@@ -821,26 +821,6 @@
         "signature": "9461305796499cc686d0cbdd8dda922ba98882b19adbef6e5d2ffd683b31dc2b",
         "affectsGlobalScope": false
       },
-      "../src/provider/server.ts": {
-        "version": "955110c1f1759c3afb559eb38fa2c2e8fd0ff29020c7462b68bfbe15ff235713",
-        "signature": "aa9a6f60edd08968f39155d117e7c6334c1f7e5a073fa9f08710a026816b61e9",
-        "affectsGlobalScope": false
-      },
-      "../src/common/balancers/balance.manage.interface.ts": {
-        "version": "d6182f437eb83defe98ee5d53a1bb8843aaac3cbe0e12b43a90d9a18b06e018d",
-        "signature": "b207dcdc1cdecd1588eb30a8e49cde797a09447ff2cfb019de977a6ef960f076",
-        "affectsGlobalScope": false
-      },
-      "../src/common/balancers/balance.base.ts": {
-        "version": "1c72fe98a4dee32de65ffa344cdd39b81c7726d33b6c71243959a6945776fe29",
-        "signature": "0aecbdc2fa090d991e5e91ce5983299b8de04285af2fcdc1de9bc4f2741812f9",
-        "affectsGlobalScope": false
-      },
-      "../src/common/balancers/balance.weight.round.robin.ts": {
-        "version": "f3ede196328900ef8a4dc98b15e248cdc91bb66c5a519d818151c51ef83d7cdc",
-        "signature": "63bb72f7eb54aef69fa33607b4fa39210715e97ae5d4eb59fcb77fe855b5b92d",
-        "affectsGlobalScope": false
-      },
       "../node_modules/rxjs/internal/operators/audit.d.ts": {
         "version": "fe936a68d281ccc2060f8c3de69a0682a807c8fd1b8abccc0a91b83195ca0f94",
         "signature": "fe936a68d281ccc2060f8c3de69a0682a807c8fd1b8abccc0a91b83195ca0f94",
@@ -1361,13 +1341,33 @@
         "signature": "e80599bf4ef4579f28b0e623a64064a512330584dde58875b498ff8da7e347f7",
         "affectsGlobalScope": false
       },
+      "../src/provider/server.ts": {
+        "version": "c3d7ae4f18c33318230a238903c20f9c2f31e0ad302ef88a250278d53ea8c162",
+        "signature": "0f664f1c0a67ce3cb5b2ba3eb6a79ba25a5af23809b44d9e6533826e947d968a",
+        "affectsGlobalScope": false
+      },
+      "../src/common/balancers/balance.manage.interface.ts": {
+        "version": "d6182f437eb83defe98ee5d53a1bb8843aaac3cbe0e12b43a90d9a18b06e018d",
+        "signature": "b207dcdc1cdecd1588eb30a8e49cde797a09447ff2cfb019de977a6ef960f076",
+        "affectsGlobalScope": false
+      },
+      "../src/common/balancers/balance.base.ts": {
+        "version": "1c72fe98a4dee32de65ffa344cdd39b81c7726d33b6c71243959a6945776fe29",
+        "signature": "0aecbdc2fa090d991e5e91ce5983299b8de04285af2fcdc1de9bc4f2741812f9",
+        "affectsGlobalScope": false
+      },
+      "../src/common/balancers/balance.weight.round.robin.ts": {
+        "version": "f3ede196328900ef8a4dc98b15e248cdc91bb66c5a519d818151c51ef83d7cdc",
+        "signature": "63bb72f7eb54aef69fa33607b4fa39210715e97ae5d4eb59fcb77fe855b5b92d",
+        "affectsGlobalScope": false
+      },
       "../src/consumer/client.ts": {
-        "version": "bcbd650acf27170211dd7e41d054d831a0e89a05df62e0a88636e77103ac5dd5",
+        "version": "2026255560d0c6afbee868a278144da5084f68e1c96175ca42baabaf7361a543",
         "signature": "b864020a9033a0ea303c9e883d71273b5107211eb5f7be9bd7319dd74caa3f17",
         "affectsGlobalScope": false
       },
       "../src/index.ts": {
-        "version": "e25d1ccdb3dc5c6245194bf35d839fa21a6669dda0e145537523f83f0bc716cd",
+        "version": "c401df6db8e9acdb7f8cf6315e4ff448e4f066decc923bc4277fd24b87591d80",
         "signature": "48dae0a7032c7329c41a6e11997c8e96bff3ac8423486db472053f2b0fbd2153",
         "affectsGlobalScope": false
       },
@@ -4852,6 +4852,7 @@
         "../node_modules/@types/node/ts3.4/fs.d.ts",
         "../node_modules/@types/node/ts3.4/process.d.ts",
         "../node_modules/@types/node/ts3.4/util.d.ts",
+        "../node_modules/fast-safe-stringify/index.d.ts",
         "../node_modules/rxjs/index.d.ts",
         "../node_modules/rxjs/operators/index.d.ts",
         "../node_modules/zego-config/lib/index.d.ts",
@@ -4886,6 +4887,8 @@
         "../node_modules/@types/node/ts3.4/process.d.ts",
         "../node_modules/@types/node/ts3.4/util.d.ts",
         "../node_modules/fast-safe-stringify/index.d.ts",
+        "../node_modules/rxjs/index.d.ts",
+        "../node_modules/rxjs/operators/index.d.ts",
         "../node_modules/zego-config/lib/index.d.ts",
         "../node_modules/zego-injector/lib/index.d.ts",
         "../src/common/logger/logger.ts",

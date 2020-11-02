@@ -2,7 +2,7 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-09-01 10:50:22
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-10-29 19:31:41
+ * @Last Modified time: 2020-11-02 18:32:26
  */
 import { ZkHelper } from '../common/zookeeper/zk.helper';
 import { Injectable } from 'zego-injector';
@@ -11,8 +11,18 @@ import * as Path from 'path';
 import * as Event from 'events';
 import { BusinessLogger } from '../common/logger/logger';
 import { WeightRoundRobin } from '../common/balancers/balance.weight.round.robin';
-import { Subject, interval, from, Subscription, merge, fromEvent, of, timer, Observable, BehaviorSubject, throwError } from 'rxjs';
-import { map,retry, tap, switchMap, debounceTime, distinctUntilChanged, take, filter, scan, takeUntil, switchMapTo, catchError, timeout, delay, mapTo } from 'rxjs/operators';
+import fastSafeStringify from 'fast-safe-stringify';
+import { Subject, interval, from, Subscription, fromEvent, of } from 'rxjs';
+import {
+  retry,
+  tap,
+  switchMap,
+  debounceTime,
+  distinctUntilChanged,
+  catchError,
+  map,
+  switchMapTo,
+} from 'rxjs/operators';
 
 type subscibeConfig = {
   // 属于哪个系统
@@ -20,7 +30,7 @@ type subscibeConfig = {
   // 属于哪个服务
   serviceName: string;
   // 是否需要监听权重
-  isNeedWacherWeight?: boolean
+  isNeedWacherWeight?: boolean;
 };
 
 type wacherParams = {
@@ -82,8 +92,8 @@ export class CenterClient extends Event.EventEmitter {
    * @param params
    * @param listener
    */
-  public subscribe(params: subscibeConfig, listener: Function | Subject<any>,isNeedWacherWeight:boolean = false) {
-    const { systemName, serviceName  } = params;
+  public subscribe(params: subscibeConfig, listener: Function | Subject<any>, isNeedWacherWeight: boolean = false) {
+    const { systemName, serviceName } = params;
     const serverPath = Path.join(systemName, serviceName);
     // 兼容之前
     isNeedWacherWeight = params.isNeedWacherWeight || isNeedWacherWeight;
@@ -91,38 +101,41 @@ export class CenterClient extends Event.EventEmitter {
     this.subscribeWacherNode(serverPath);
 
     // 用户回调函数
-    const callback = typeof listener === "function"? listener : function(){}
+    const callback = typeof listener === 'function' ? listener : function () {};
     // 通知用户用的
-    const noticeSubject = listener instanceof Subject? listener : new Subject()
+    const noticeSubject = listener instanceof Subject ? listener : new Subject();
 
-    noticeSubject.pipe(
-      // 防抖
-      debounceTime(300),
-      // 去重
-      distinctUntilChanged((prev,next) => prev != null && next != null && JSON.stringify(prev) == JSON.stringify(next)),
-      // 通知用户
-      tap(server => callback(server))
-    ).subscribe()
+    noticeSubject
+      .pipe(
+        // 防抖
+        debounceTime(300),
+        // 去重
+        distinctUntilChanged((prev, next) => fastSafeStringify(prev) == fastSafeStringify(next)),
+        // 通知用户
+        tap((server) => callback(server)),
+      )
+      .subscribe();
 
     // 节点被删除
-    fromEvent(this,`${eventName.NODE_CHILD_DELETE}:${serverPath}`)
-      .pipe(tap(event => callback(null)))
-      .subscribe(noticeSubject)
+    fromEvent(this, `${eventName.NODE_CHILD_DELETE}:${serverPath}`)
+      .pipe(map((event) => null))
+      .subscribe(noticeSubject);
     // 单节点被删除
     fromEvent(this, `${eventName.CHILDNODE_DELETE}:${serverPath}`)
-      .pipe(switchMap(event => of(this.getNextServer(serverPath))))
-      .subscribe(noticeSubject)
+      .pipe(switchMap((event) => of(this.getNextServer(serverPath))))
+      .subscribe(noticeSubject);
     // // 节点被添加
     // fromEvent(this, `${eventName.CHILDNODE_ADD}:${serverPath}`)
     //   .pipe(switchMap(event => of(this.getNextServer(serverPath))),filter(server => server != null))
     //   .subscribe(noticeSubject)
     // 节点数据变更
-    isNeedWacherWeight && fromEvent(this, `${eventName.CHILDNODE_UPDATE}:${serverPath}`)
-      .pipe(
-        tap(event => console.log("节点数据变更")), 
-        switchMap(event => of(this.getNextServer(serverPath)))
-      )
-      .subscribe(noticeSubject)
+    isNeedWacherWeight &&
+      fromEvent(this, `${eventName.CHILDNODE_UPDATE}:${serverPath}`)
+        .pipe(
+          tap((event) => console.log('节点数据变更')),
+          switchMap((event) => of(this.getNextServer(serverPath))),
+        )
+        .subscribe(noticeSubject);
   }
 
   /**
@@ -232,7 +245,13 @@ export class CenterClient extends Event.EventEmitter {
     }
     const subscribe = new Subject();
     const dataSubscribe = this.wacherData({ path: Path.join(path, child), subscribe });
-    const dataSender = { nodePath: path, node: child, subscribe: dataSubscribe, data: null,prevString:null };
+    const dataSender: node & { prevString: string | null } = {
+      nodePath: path,
+      node: child,
+      subscribe: dataSubscribe,
+      data: null,
+      prevString: null,
+    };
     // 数据回调
     const dataCallback = (data: any) => {
       try {
@@ -244,23 +263,18 @@ export class CenterClient extends Event.EventEmitter {
         dataSender.prevString = data;
         // 看看数据是否有改变 有改变就触发update事件
         if (data !== prevString) {
-          this.logger.log(`有节点变更,prev:${prevString}. current:${data}`)
+          this.logger.log(`有节点变更,prev:${prevString}. current:${data}`);
           // 触发单独的添加事件
           this.emit(eventName.CHILDNODE_UPDATE, {
-            nodePath:path,
+            nodePath: path,
             childPath: child,
             prevChildData: dataSender.data,
             childData: nextData,
           });
         }
-        
       } catch (err) {}
     };
-    subscribe.pipe(tap(dataCallback)).subscribe({
-      next: (value) => {
-        //this.logger.log(value,"subscribeWacherData")
-      },
-    });
+    subscribe.pipe(tap(dataCallback)).subscribe();
     // 记录已经被监听
     childMap.set(child, dataSender);
     // 返回subscribe
@@ -281,6 +295,7 @@ export class CenterClient extends Event.EventEmitter {
     const nodeSender = { subscribe: nodeSubscribe, childMap: new Map() };
     // 节点数据回调
     const childrenCallback = (children: any) => {
+      console.log('subscribeWacherNode', children);
       // 没有节点的处理逻辑
       if (!children || !Array.isArray(children) || children.length <= 0) {
         const children = Array.from(nodeSender.childMap.values());
@@ -298,7 +313,7 @@ export class CenterClient extends Event.EventEmitter {
         // 触发一个总事件
         this.emit(eventName.NODE_CHILD_DELETE, { nodePath: path, childrenPath: children });
         // 记录日志
-        this.logger.log(`根节点被删除:${path}`)
+        this.logger.log(`根节点被删除:${path}`);
         // 停止往下执行
         return;
       }
@@ -308,8 +323,8 @@ export class CenterClient extends Event.EventEmitter {
         // 计算是否被删除的
         const result = !children.includes(child);
         // 被删除了
-        if(result){
-          this.unsubscribeData(path,child);
+        if (result) {
+          this.unsubscribeData(path, child);
           // 触发单独事件 删除事件
           this.emit(eventName.CHILDNODE_DELETE, {
             nodePath: path,
@@ -317,7 +332,7 @@ export class CenterClient extends Event.EventEmitter {
             childData: nodeSender.childMap?.get(child),
           });
           // 记录日志
-          this.logger.log(`单节点被删除,path:${path}. child:${child}`)
+          this.logger.log(`单节点被删除,path:${path}. child:${child}`);
         }
         // 返回过滤结果
         return result;
@@ -327,13 +342,13 @@ export class CenterClient extends Event.EventEmitter {
         // 计算是否被添加的
         const result = !nodeSender.childMap?.has(child);
         // 被添加了
-        if(result){
+        if (result) {
           // 进行监听数据
           this.subscribeWacherData(path, child);
           // 触发单独的添加事件 添加事件
           this.emit(eventName.CHILDNODE_ADD, { nodePath: path, childPath: child });
           // 记录日志
-          this.logger.log(`单节点被添加,path:${path}. child:${child}`)
+          this.logger.log(`单节点被添加,path:${path}. child:${child}`);
         }
         // 返回过滤结果
         return result;
@@ -352,11 +367,7 @@ export class CenterClient extends Event.EventEmitter {
         this.emit(eventName.NODE_CHILD_ADD, { nodePath: path, childrenPath: addNode });
       }
     };
-    subscribe.pipe(tap(childrenCallback)).subscribe({
-      next: (value) => {
-        //this.logger.log(value,"subscribeWacherNode")
-      },
-    });
+    subscribe.pipe(tap(childrenCallback)).subscribe();
     // 记录已经被监听
     this.nodes.set(path, nodeSender);
     // 返回subscribe
@@ -372,7 +383,15 @@ export class CenterClient extends Event.EventEmitter {
     return interval(timer)
       .pipe(
         // 获取最新节点
-        switchMap((num) => from(this.helper.getData(path))),
+        map(async (num) => {
+          let result = null;
+          try {
+            result = await this.helper.getData(path);
+          } catch (err) {}
+          return result;
+        }),
+        // 把promise转换成rxjs
+        switchMap((sender) => from(sender)),
         // 处理拿到的节点数据
         tap((data: any) => {
           // console.log(data, 'wacherData');
@@ -392,10 +411,18 @@ export class CenterClient extends Event.EventEmitter {
     return interval(timer)
       .pipe(
         // 获取最新节点
-        switchMap((num) => from(this.helper.getChildren(path))),
+        map(async (num) => {
+          let children = [];
+          try {
+            children = (await this.helper.getChildren(path)) as any[];
+          } catch (err) {}
+          return children;
+        }),
+        // 把promise转换成rxjs
+        switchMap((sender) => from(sender)),
         // 处理拿到的节点数据
         tap((children: any) => {
-          // console.log(children, 'wacherNode');
+          console.log(children, 'end wacherNode');
         }),
         // 报错重新监听
         retry(),
