@@ -2,7 +2,7 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-08-29 14:20:55
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-11-02 18:30:09
+ * @Last Modified time: 2020-11-03 15:33:19
  */
 import fastSafeStringify from 'fast-safe-stringify';
 import { CreateMode } from 'node-zookeeper-client';
@@ -132,7 +132,6 @@ export class CenterService {
         // 循环注册
         tap(async (currentTask: any) => {
           const systemWeiget = this.systemWeiget || (await GetSystemWeight());
-          console.log('执行定时任务', currentTask, '当前服务器状况:', systemWeiget);
           try {
             //确保节点还存在中
             const path = await this.registerZK({ ...currentTask, weight: systemWeiget.weight });

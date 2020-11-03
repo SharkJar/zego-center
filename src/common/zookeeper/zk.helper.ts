@@ -2,7 +2,7 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-08-25 14:00:41
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-10-14 16:31:00
+ * @Last Modified time: 2020-11-03 15:28:38
  */
 import { createClient, CreateMode, ACL, Permission, Id } from 'node-zookeeper-client';
 import { BusinessLogger } from '../logger/logger';
@@ -64,17 +64,24 @@ export class ZkHelper {
         : //在调用方法前 确保已经连接上zk服务器
           async (...args: any[]) => {
             const isBreak = !this.hasConnect();
-            //日志
-            this.logger.log(
-              `[ZkHelper-initConstructor] \r\n 调用方法:${name} 连接是否断开：${isBreak} 调用方法参数:${JSON.stringify(
-                args,
-              )}`,
-            );
             if (name != 'connect' && isBreak) {
               this.close();
               await this.connect();
             }
-            return await senderFunc(...args);
+            let result;
+            try {
+              result = await senderFunc(...args);
+              this.logger.log(
+                `[ZkHelper-initConstructor] \r\n 调用方法:${name} 调用方法参数:${JSON.stringify(
+                  args,
+                )} 返回结果:${JSON.stringify(result)}`,
+              );
+            } catch (err) {
+              this.logger.error(
+                `[ZkHelper-initConstructor] \r\n 调用方法:${name} 调用方法参数:${JSON.stringify(args)} 调用出错${err}`,
+              );
+            }
+            return result;
           };
     });
   }

@@ -2,7 +2,7 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-09-01 10:50:22
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-11-02 18:32:26
+ * @Last Modified time: 2020-11-03 15:33:09
  */
 import { ZkHelper } from '../common/zookeeper/zk.helper';
 import { Injectable } from 'zego-injector';
@@ -124,16 +124,23 @@ export class CenterClient extends Event.EventEmitter {
     fromEvent(this, `${eventName.CHILDNODE_DELETE}:${serverPath}`)
       .pipe(switchMap((event) => of(this.getNextServer(serverPath))))
       .subscribe(noticeSubject);
-    // // 节点被添加
-    // fromEvent(this, `${eventName.CHILDNODE_ADD}:${serverPath}`)
-    //   .pipe(switchMap(event => of(this.getNextServer(serverPath))),filter(server => server != null))
-    //   .subscribe(noticeSubject)
     // 节点数据变更
     isNeedWacherWeight &&
       fromEvent(this, `${eventName.CHILDNODE_UPDATE}:${serverPath}`)
         .pipe(
-          tap((event) => console.log('节点数据变更')),
+          // 获取服务器
           switchMap((event) => of(this.getNextServer(serverPath))),
+          // 防抖
+          debounceTime(300),
+          // 去重
+          // 如果之前返回了这个服务器 就不在返回了
+          distinctUntilChanged((prev, next) => prev?.address == next?.address),
+          // 打印
+          tap((server) =>
+            this.logger.log(
+              `[CenterClient-subscribe] \r\n 获取到的最新服务器:${server?.address},serverPath:${serverPath}`,
+            ),
+          ),
         )
         .subscribe(noticeSubject);
   }
@@ -263,7 +270,7 @@ export class CenterClient extends Event.EventEmitter {
         dataSender.prevString = data;
         // 看看数据是否有改变 有改变就触发update事件
         if (data !== prevString) {
-          this.logger.log(`有节点变更,prev:${prevString}. current:${data}`);
+          this.logger.log(`[CenterClient-subscribeWacherData] \r\n 有节点变更,prev:${prevString}. current:${data}`);
           // 触发单独的添加事件
           this.emit(eventName.CHILDNODE_UPDATE, {
             nodePath: path,
@@ -295,7 +302,6 @@ export class CenterClient extends Event.EventEmitter {
     const nodeSender = { subscribe: nodeSubscribe, childMap: new Map() };
     // 节点数据回调
     const childrenCallback = (children: any) => {
-      console.log('subscribeWacherNode', children);
       // 没有节点的处理逻辑
       if (!children || !Array.isArray(children) || children.length <= 0) {
         const children = Array.from(nodeSender.childMap.values());
@@ -313,7 +319,7 @@ export class CenterClient extends Event.EventEmitter {
         // 触发一个总事件
         this.emit(eventName.NODE_CHILD_DELETE, { nodePath: path, childrenPath: children });
         // 记录日志
-        this.logger.log(`根节点被删除:${path}`);
+        this.logger.log(`[CenterClient-subscribeWacherNode] \r\n 根节点被删除:${path}`);
         // 停止往下执行
         return;
       }
@@ -332,7 +338,7 @@ export class CenterClient extends Event.EventEmitter {
             childData: nodeSender.childMap?.get(child),
           });
           // 记录日志
-          this.logger.log(`单节点被删除,path:${path}. child:${child}`);
+          this.logger.log(`[CenterClient-subscribeWacherNode] \r\n 单节点被删除,path:${path}. child:${child}`);
         }
         // 返回过滤结果
         return result;
@@ -348,7 +354,7 @@ export class CenterClient extends Event.EventEmitter {
           // 触发单独的添加事件 添加事件
           this.emit(eventName.CHILDNODE_ADD, { nodePath: path, childPath: child });
           // 记录日志
-          this.logger.log(`单节点被添加,path:${path}. child:${child}`);
+          this.logger.log(`[CenterClient-subscribeWacherNode] \r\n 单节点被添加,path:${path}. child:${child}`);
         }
         // 返回过滤结果
         return result;
@@ -422,7 +428,7 @@ export class CenterClient extends Event.EventEmitter {
         switchMap((sender) => from(sender)),
         // 处理拿到的节点数据
         tap((children: any) => {
-          console.log(children, 'end wacherNode');
+          // console.log(children, 'end wacherNode');
         }),
         // 报错重新监听
         retry(),

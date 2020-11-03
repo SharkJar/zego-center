@@ -797,7 +797,7 @@
         "affectsGlobalScope": false
       },
       "../src/common/zookeeper/zk.helper.ts": {
-        "version": "23349d9c5b5b932d82ba2c336c33d1c40a3bea104fc680cd9622929d23fbdfa7",
+        "version": "f71301e18609ec1cfc4567492e82a2a8d57d403f720f6697b680b587e9d2403c",
         "signature": "f2d2a41e25c0a11e802765d355978724fcd7eaaff28e0fb81744e8035a67677c",
         "affectsGlobalScope": false
       },
@@ -1342,7 +1342,7 @@
         "affectsGlobalScope": false
       },
       "../src/provider/server.ts": {
-        "version": "c3d7ae4f18c33318230a238903c20f9c2f31e0ad302ef88a250278d53ea8c162",
+        "version": "d6760cab51cfd4da5c0b5653ac58b09f47ca97d8ccbda26319371abfcefe4783",
         "signature": "0f664f1c0a67ce3cb5b2ba3eb6a79ba25a5af23809b44d9e6533826e947d968a",
         "affectsGlobalScope": false
       },
@@ -1362,12 +1362,12 @@
         "affectsGlobalScope": false
       },
       "../src/consumer/client.ts": {
-        "version": "2026255560d0c6afbee868a278144da5084f68e1c96175ca42baabaf7361a543",
+        "version": "fba406e0715cf9256bb8c58dd643070c90df73d532deaccbc53eeb8f2a401ef4",
         "signature": "b864020a9033a0ea303c9e883d71273b5107211eb5f7be9bd7319dd74caa3f17",
         "affectsGlobalScope": false
       },
       "../src/index.ts": {
-        "version": "c401df6db8e9acdb7f8cf6315e4ff448e4f066decc923bc4277fd24b87591d80",
+        "version": "c7c1580edaa34e0acb9bb32c69b57909320a6cf150773cdcebaad1c96e4e3059",
         "signature": "48dae0a7032c7329c41a6e11997c8e96bff3ac8423486db472053f2b0fbd2153",
         "affectsGlobalScope": false
       },
