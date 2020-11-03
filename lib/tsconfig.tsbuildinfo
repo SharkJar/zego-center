@@ -1342,7 +1342,7 @@
         "affectsGlobalScope": false
       },
       "../src/provider/server.ts": {
-        "version": "d6760cab51cfd4da5c0b5653ac58b09f47ca97d8ccbda26319371abfcefe4783",
+        "version": "7a2dc1e587ffb9182bc95231d2935fd8853d56bf86bff00c5ee96bbea9d577da",
         "signature": "0f664f1c0a67ce3cb5b2ba3eb6a79ba25a5af23809b44d9e6533826e947d968a",
         "affectsGlobalScope": false
       },
@@ -1362,12 +1362,12 @@
         "affectsGlobalScope": false
       },
       "../src/consumer/client.ts": {
-        "version": "fba406e0715cf9256bb8c58dd643070c90df73d532deaccbc53eeb8f2a401ef4",
+        "version": "3a963822a220808555200a3bd4dd27d2e157ba1e541f3246a14de2f28184d047",
         "signature": "b864020a9033a0ea303c9e883d71273b5107211eb5f7be9bd7319dd74caa3f17",
         "affectsGlobalScope": false
       },
       "../src/index.ts": {
-        "version": "c7c1580edaa34e0acb9bb32c69b57909320a6cf150773cdcebaad1c96e4e3059",
+        "version": "3ffda8579cbb3777d55e18f6b16529804b8dbe29c81fecacbfec906bf8cfe14a",
         "signature": "48dae0a7032c7329c41a6e11997c8e96bff3ac8423486db472053f2b0fbd2153",
         "affectsGlobalScope": false
       },

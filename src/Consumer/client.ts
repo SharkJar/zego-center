@@ -2,7 +2,7 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-09-01 10:50:22
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-11-03 15:33:09
+ * @Last Modified time: 2020-11-03 17:15:17
  */
 import { ZkHelper } from '../common/zookeeper/zk.helper';
 import { Injectable } from 'zego-injector';
@@ -12,16 +12,14 @@ import * as Event from 'events';
 import { BusinessLogger } from '../common/logger/logger';
 import { WeightRoundRobin } from '../common/balancers/balance.weight.round.robin';
 import fastSafeStringify from 'fast-safe-stringify';
-import { Subject, interval, from, Subscription, fromEvent, of } from 'rxjs';
+import { Subject, from, Subscription, fromEvent, of, timer } from 'rxjs';
 import {
   retry,
   tap,
   switchMap,
   debounceTime,
   distinctUntilChanged,
-  catchError,
   map,
-  switchMapTo,
 } from 'rxjs/operators';
 
 type subscibeConfig = {
@@ -385,8 +383,8 @@ export class CenterClient extends Event.EventEmitter {
    * @param sender
    */
   private wacherData(sender: wacherParams) {
-    const { timer = this.defaultTimer, subscribe, path } = sender;
-    return interval(timer)
+    const { timer:t = this.defaultTimer, subscribe, path } = sender;
+    return timer(0,t)
       .pipe(
         // 获取最新节点
         map(async (num) => {
@@ -413,8 +411,8 @@ export class CenterClient extends Event.EventEmitter {
    * @param sender
    */
   private wacherNode(sender: wacherParams) {
-    const { timer = this.defaultTimer, subscribe, path } = sender;
-    return interval(timer)
+    const { timer:t = this.defaultTimer, subscribe, path } = sender;
+    return timer(0,t)
       .pipe(
         // 获取最新节点
         map(async (num) => {

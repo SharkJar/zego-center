@@ -2,7 +2,7 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-08-29 14:20:55
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-11-03 15:33:19
+ * @Last Modified time: 2020-11-03 17:11:00
  */
 import fastSafeStringify from 'fast-safe-stringify';
 import { CreateMode } from 'node-zookeeper-client';
@@ -12,7 +12,7 @@ import { ConfigService } from 'zego-config';
 import { GetSystemWeight } from '../common/system/system.weight';
 import * as Path from 'path';
 import { BusinessLogger } from '../common/logger/logger';
-import { interval, Subject, from, of } from 'rxjs';
+import { interval, Subject, from, of, timer } from 'rxjs';
 import { switchMap, tap, map } from 'rxjs/operators';
 
 type registerConfig = {
@@ -119,7 +119,7 @@ export class CenterService {
    * 定时任务
    */
   private nextTick(polling: number = 60 * 1000) {
-    return interval(polling)
+    return timer(0,polling)
       .pipe(
         // 如果系统状态不好， 就不在返回注册列表进行注册
         switchMap((num) => of(this.systemState ? [] : Array.from(this.liveHeadTask.values()))),
