@@ -2,7 +2,7 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-09-01 10:50:22
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-11-03 17:15:17
+ * @Last Modified time: 2020-11-23 17:19:40
  */
 import { ZkHelper } from '../common/zookeeper/zk.helper';
 import { Injectable } from 'zego-injector';
@@ -13,14 +13,7 @@ import { BusinessLogger } from '../common/logger/logger';
 import { WeightRoundRobin } from '../common/balancers/balance.weight.round.robin';
 import fastSafeStringify from 'fast-safe-stringify';
 import { Subject, from, Subscription, fromEvent, of, timer } from 'rxjs';
-import {
-  retry,
-  tap,
-  switchMap,
-  debounceTime,
-  distinctUntilChanged,
-  map,
-} from 'rxjs/operators';
+import { retry, tap, switchMap, debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 
 type subscibeConfig = {
   // 属于哪个系统
@@ -122,25 +115,26 @@ export class CenterClient extends Event.EventEmitter {
     fromEvent(this, `${eventName.CHILDNODE_DELETE}:${serverPath}`)
       .pipe(switchMap((event) => of(this.getNextServer(serverPath))))
       .subscribe(noticeSubject);
+
     // 节点数据变更
-    isNeedWacherWeight &&
-      fromEvent(this, `${eventName.CHILDNODE_UPDATE}:${serverPath}`)
-        .pipe(
-          // 获取服务器
-          switchMap((event) => of(this.getNextServer(serverPath))),
-          // 防抖
-          debounceTime(300),
-          // 去重
-          // 如果之前返回了这个服务器 就不在返回了
-          distinctUntilChanged((prev, next) => prev?.address == next?.address),
-          // 打印
-          tap((server) =>
-            this.logger.log(
-              `[CenterClient-subscribe] \r\n 获取到的最新服务器:${server?.address},serverPath:${serverPath}`,
-            ),
+    //fromEvent(this, `${isNeedWacherWeight? eventName.CHILDNODE_UPDATE : eventName.CHILDNODE_ADD}:${serverPath}`)
+    fromEvent(this, `${eventName.CHILDNODE_UPDATE}:${serverPath}`)
+      .pipe(
+        // 获取服务器
+        switchMap((event) => of(this.getNextServer(serverPath))),
+        // 防抖
+        debounceTime(300),
+        // 去重
+        // 如果之前返回了这个服务器 就不在返回了
+        distinctUntilChanged((prev, next) => prev?.address == next?.address),
+        // 打印
+        tap((server) =>
+          this.logger.log(
+            `[CenterClient-subscribe] \r\n 获取到的最新服务器:${server?.address},serverPath:${serverPath}`,
           ),
-        )
-        .subscribe(noticeSubject);
+        ),
+      )
+      .subscribe(noticeSubject);
   }
 
   /**
@@ -383,8 +377,8 @@ export class CenterClient extends Event.EventEmitter {
    * @param sender
    */
   private wacherData(sender: wacherParams) {
-    const { timer:t = this.defaultTimer, subscribe, path } = sender;
-    return timer(0,t)
+    const { timer: t = this.defaultTimer, subscribe, path } = sender;
+    return timer(0, t)
       .pipe(
         // 获取最新节点
         map(async (num) => {
@@ -411,8 +405,8 @@ export class CenterClient extends Event.EventEmitter {
    * @param sender
    */
   private wacherNode(sender: wacherParams) {
-    const { timer:t = this.defaultTimer, subscribe, path } = sender;
-    return timer(0,t)
+    const { timer: t = this.defaultTimer, subscribe, path } = sender;
+    return timer(0, t)
       .pipe(
         // 获取最新节点
         map(async (num) => {

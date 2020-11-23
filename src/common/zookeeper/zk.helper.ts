@@ -2,9 +2,9 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-08-25 14:00:41
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-11-03 15:28:38
+ * @Last Modified time: 2020-11-23 17:36:10
  */
-import { createClient, CreateMode, ACL, Permission, Id } from 'node-zookeeper-client';
+import { Client, createClient, CreateMode, ACL, Permission, Id } from 'node-zookeeper-client';
 import { BusinessLogger } from '../logger/logger';
 import { Injectable } from 'zego-injector';
 import { ConfigService } from 'zego-config';
@@ -23,87 +23,121 @@ export const ACLS = {
   READ_ACL_UNSAFE: [new ACL(Permission.READ, IDS.ANYONE_ID_UNSAFE)],
 };
 
-// interface zookeeperHelper {
-//   [key: string]: any;
-//   createServer(): any;
-//   create(path: string, data: string, acls: any[], mode: number): Promise<unknown>;
-//   connect(): Promise<unknown>;
-//   setData(path: string, data?: string, version?: number): Promise<unknown>;
-//   getData(path: string, watcher?: Function): Promise<unknown>;
-//   close(): void;
-//   getState(): unknown;
-//   setACL(path: string, acls?: any[], version?: number): Promise<unknown>;
-//   getACL(path: string): Promise<unknown>;
-//   listSubTreeBFS(path: string): Promise<unknown>;
-//   mkdirp(path: string, data?: string, acls?: any[], mode?: number): Promise<unknown>;
-//   remove(path: string, version?: number): Promise<unknown>;
-//   exists(path: string, watcher?: Function): Promise<boolean>;
-//   getChildren(path: string, watcher?: Function): Promise<unknown>;
-// }
-
 @Injectable()
 export class ZkHelper {
   //方便字典
   [name: string]: any;
   //zookeeper client
   private client!: any;
-  constructor(private logger: BusinessLogger, private config: ConfigService) {
-    this.initConstructor();
-  }
+  constructor(private logger: BusinessLogger, private config: ConfigService) {}
 
   /**
-   * 初始化
+   * 调用node-zookeeper-client方法
    */
-  private initConstructor() {
-    const methodNames = this.getUseMethodNames();
-    methodNames.forEach((name) => {
-      const notPromiseFunc = ['getState', 'close', 'createServer', 'listener'].includes(name);
-      const senderFunc = this[name].bind(this);
-      this[name] = notPromiseFunc
-        ? senderFunc
-        : //在调用方法前 确保已经连接上zk服务器
-          async (...args: any[]) => {
-            const isBreak = !this.hasConnect();
-            if (name != 'connect' && isBreak) {
-              this.close();
-              await this.connect();
-            }
-            let result;
-            try {
-              result = await senderFunc(...args);
-              this.logger.log(
-                `[ZkHelper-initConstructor] \r\n 调用方法:${name} 调用方法参数:${JSON.stringify(
-                  args,
-                )} 返回结果:${JSON.stringify(result)}`,
-              );
-            } catch (err) {
-              this.logger.error(
-                `[ZkHelper-initConstructor] \r\n 调用方法:${name} 调用方法参数:${JSON.stringify(args)} 调用出错${err}`,
-              );
-            }
-            return result;
-          };
-    });
+  private callLib(methodName: string, ...args: any[]) {
+    if (!this.client) {
+      this.createServer();
+    }
+    // 确保是调用的client
+    if (!(methodName in this.client) || typeof this.client[methodName] !== 'function') {
+      return Promise.reject(`[ZkHelper-callLib] - ${methodName} is not a function.`);
+    }
+    // 创建一个promise回调
+    const { timeout, success, error, promise } = this.createPromise();
+    // 创建连接
+    this.connect()
+      .then(() => {
+        const result = this.client[methodName](...args);
+        // 调用成功
+        success(result);
+      })
+      .catch(error);
+    // 返回promise
+    return promise;
   }
-  /**
-   * 获取到需要操作zookeeper的方法名
-   */
-  private getUseMethodNames() {
-    return Object.getOwnPropertyNames(ZkHelper.prototype).filter(
-      (key) =>
-        !['constructor', 'helper', 'createInstance', 'hasConnect', 'connect'].find((name) => key == name) &&
-        typeof ZkHelper.prototype[key] === 'function',
-    );
-  }
+
   /**
    * 是否还在连接中
    */
   private hasConnect() {
     const state = this.getState() as any;
     const stateName = state.getName();
-    //打印日志
-    this.logger.log(`[ZkHelper-hasConnect] \r\n zookeeper state:${stateName}`);
+    // 打印日志
+    // this.logger.log(`[ZkHelper-hasConnect] \r\n zookeeper state:${stateName}`);
+    // 处于连接状态
     return ['CONNECTED_READ_ONLY', 'SYNC_CONNECTED', 'SASL_AUTHENTICATED'].includes(stateName);
+  }
+
+  /**
+   * 创建一个promise的回调
+   */
+  private createPromise() {
+    // promise
+    let resolve: Function = empty,
+      reject: Function = empty,
+      timeHandler: any;
+    // promise的对象
+    let result = new Promise((res, rej) => {
+      (resolve = res), (reject = rej);
+    });
+    // 成功和失败之后 都要的回调
+    let complete = () => {
+      // 关闭倒计时
+      timeHandler && clearTimeout(timeHandler);
+      // 清空回调
+      resolve = reject = empty;
+    };
+    // 成功回调
+    let success = (ang: any) => {
+      resolve != empty && resolve(ang);
+      complete();
+    };
+    // 失败回调
+    let error = (ang: any) => {
+      reject != empty && reject(ang);
+      complete();
+    };
+    // 开始倒计时
+    let timeout = (time: number = 30 * 1000) => {
+      //连接30秒超时
+      timeHandler = setTimeout(() => {
+        // 错误回调
+        reject != empty && reject('timeout');
+        // 清空回调
+        complete();
+      }, time);
+    };
+
+    return {
+      timeout,
+      promise: result,
+      success,
+      error,
+    };
+  }
+
+  /**
+   * 连接zk
+   */
+  private connect() {
+    const isConnected = this.hasConnect();
+    // 如果已经是连接状态 就不在重复连接
+    if (isConnected) {
+      return Promise.resolve();
+    }
+    // 创建一个promise回调
+    const { timeout, success, error, promise } = this.createPromise();
+    // 连接成功
+    this.client.once('connected', success);
+    try {
+      // 开始连接
+      this.client.connect();
+      // timeout
+      timeout();
+    } catch (err) {
+      error(err);
+    }
+    return promise;
   }
 
   /**
@@ -115,83 +149,90 @@ export class ZkHelper {
     }
     return this.client.getState();
   }
+
+  /**
+   * 创建zk客户端
+   * @param options
+   */
+  public createServer() {
+    if (this.client) {
+      return this.client;
+    }
+    // 和配置文件拿到相关配置
+    this.client = createClient(this.config.get('SERVERS'), {
+      sessionTimeout: Number(this.config.get<number>('SESSIONTIMEOUT')),
+      spinDelay: Number(this.config.get<number>('SPINDELAY')),
+      retries: Number(this.config.get<number>('RETRIES')),
+    });
+    // 监听日志
+    this.listener();
+    return this.client;
+  }
+
+  private getLib(methodName: string, ...args: any[]): Promise<any> {
+    // 创建一个promise回调
+    const { timeout, success: promiseSuccess, error: promiseError, promise } = this.createPromise();
+    // 调用setACL方法
+    this.callLib(methodName, ...args, (error: any, result: any, stat: any) => {
+      // 有错误
+      if (error) {
+        // // 打印日志
+        // this.logger.error(
+        //   `[ZkHelper-initConstructor] \r\n 调用方法:${methodName} 调用方法参数:${JSON.stringify(args)} 调用出错${error}`,
+        // );
+        return promiseError(error);
+      }
+      // // 打印日志
+      // this.logger.log(
+      //   `[ZkHelper-initConstructor] \r\n 调用方法:${methodName} 调用方法参数:${JSON.stringify(args)} 返回结果:${JSON.stringify(result)}`,
+      // );
+      // 返回成功
+      promiseSuccess(result);
+    }).catch(promiseError);
+    return promise;
+  }
+
   /**
    * 设置节点的ACL
    * @param path
    * @param acls
    * @param version
    */
-  public setACL(path: string, acls: any[] = ACLS.OPEN_ACL_UNSAFE, version: number = -1): Promise<unknown> {
-    let resolve: Function, reject: Function;
-    this.client.setACL(path, acls, (error: any, acls: any, stat: any) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(acls);
-    });
-    return new Promise((res, rej) => {
-      (resolve = res), (reject = rej);
-    });
+  public setACL(path: string, acls: any[] = ACLS.OPEN_ACL_UNSAFE, version: number = -1): Promise<any> {
+    return this.getLib('setACL', path, acls);
   }
 
   /**
    * 获取节点的ACL
    * @param path
    */
-  public getACL(path: string): Promise<unknown> {
-    let resolve: Function, reject: Function;
-    this.client.getACL(path, (error: any, acls: any, stat: any) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(acls);
-    });
-    return new Promise((res, rej) => {
-      (resolve = res), (reject = rej);
-    });
+  public getACL(path: string): Promise<any> {
+    return this.getLib('getACL', path);
   }
 
   /**
    * 获取当前路径下所有子节点
    * @param path
    */
-  public listSubTreeBFS(path: string): Promise<unknown> {
-    let resolve: Function, reject: Function;
-    this.client.listSubTreeBFS(path, (error: any, children: any) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(children);
-    });
-    return new Promise((res, rej) => {
-      (resolve = res), (reject = rej);
-    });
+  public listSubTreeBFS(path: string): Promise<any> {
+    return this.getLib('listSubTreeBFS', path);
   }
 
   /**
    * 获取子节点
    * @param path
-   * @param watcher
+   * @param watcher 第一个参数是err 当成功的时候 err = null. 否则就是错误信息
    */
-  public getChildren(path: string, watcher?: Function): Promise<unknown> {
-    let resolve: Function | null = null,
-      reject: Function | null = null;
-    this.client.getChildren(path, watcher, (error: any, children: any) => {
-      if (error) {
-        if (typeof reject === 'function') {
-          reject(error);
-        } else {
-          typeof watcher === 'function' && watcher('error');
-        }
-        (reject = null), (resolve = null);
-        return;
-      }
-      typeof resolve === 'function' && resolve(children);
-      (reject = null), (resolve = null);
-    });
-    return new Promise((res, rej) => {
-      (resolve = res), (reject = rej);
-    });
+  public getChildren(path: string, watcher?: Function): Promise<any> {
+    return this.getLib('getChildren', path);
+    // return this.getLib('getChildren',path,async () => {
+    //   try{
+    //     const result = await this.getChildren(path,watcher)
+    //     typeof watcher === "function" && watcher(null,result)
+    //   }catch(err){
+    //     typeof watcher === "function" && watcher(err)
+    //   }
+    // })
   }
 
   /**
@@ -206,18 +247,8 @@ export class ZkHelper {
     data: string = '',
     acls: any[] = ACLS.OPEN_ACL_UNSAFE,
     mode: number = CreateMode.PERSISTENT,
-  ): Promise<unknown> {
-    let resolve: Function, reject: Function;
-    this.client.mkdirp(path, Buffer.from(data), acls, mode, (error: any, path: any) => {
-      if (error) {
-        return reject(error);
-      }
-
-      resolve(path);
-    });
-    return new Promise((res, rej) => {
-      (resolve = res), (reject = rej);
-    });
+  ): Promise<any> {
+    return this.getLib('mkdirp', path, Buffer.from(data), acls, mode);
   }
 
   /**
@@ -232,17 +263,8 @@ export class ZkHelper {
     data: string = '',
     acls: any[] = ACLS.OPEN_ACL_UNSAFE,
     mode: number = CreateMode.PERSISTENT,
-  ): Promise<unknown> {
-    let resolve: Function, reject: Function;
-    this.client.create(path, Buffer.from(data), acls, mode, (error: any, path: any) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(path);
-    });
-    return new Promise((res, rej) => {
-      (resolve = res), (reject = rej);
-    });
+  ): Promise<any> {
+    return this.getLib('create', path, Buffer.from(data), acls, mode);
   }
 
   /**
@@ -250,17 +272,8 @@ export class ZkHelper {
    * @param path
    * @param version
    */
-  public remove(path: string, version: number = -1): Promise<unknown> {
-    let resolve: Function, reject: Function;
-    this.client.removeRecursive(path, version, (error: any) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve();
-    });
-    return new Promise((res, rej) => {
-      (resolve = res), (reject = rej);
-    });
+  public remove(path: string, version: number = -1): Promise<any> {
+    return this.getLib('removeRecursive', path, version);
   }
 
   /**
@@ -268,25 +281,16 @@ export class ZkHelper {
    * @param path
    * @param watcher
    */
-  public exists(path: string, watcher?: Function): Promise<boolean> {
-    let resolve: Function | null = null,
-      reject: Function | null = null;
-    this.client.exists(path, watcher, (error: any, state: any) => {
-      if (error) {
-        if (typeof reject === 'function') {
-          reject(error);
-        } else {
-          typeof watcher === 'function' && watcher('error');
-        }
-        (reject = null), (resolve = null);
-        return;
-      }
-      typeof resolve === 'function' && resolve(!!state);
-      (reject = null), (resolve = null);
-    });
-    return new Promise((res, rej) => {
-      (resolve = res), (reject = rej);
-    });
+  public exists(path: string, watcher?: Function): Promise<any> {
+    return this.getLib('exists', path);
+    // return this.getLib('exists',path,async () => {
+    //   try{
+    //     const result = await this.exists(path,watcher)
+    //     typeof watcher === "function" && watcher(null,result)
+    //   }catch(err){
+    //     typeof watcher === "function" && watcher(err)
+    //   }
+    // })
   }
 
   /**
@@ -295,17 +299,8 @@ export class ZkHelper {
    * @param data
    * @param version
    */
-  public setData(path: string, data: string = '', version: number = -1): Promise<unknown> {
-    let resolve: Function, reject: Function;
-    this.client.setData(path, Buffer.from(data), version, (error: any, state: any) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(state);
-    });
-    return new Promise((res, rej) => {
-      (resolve = res), (reject = rej);
-    });
+  public setData(path: string, data: string = '', version: number = -1): Promise<any> {
+    return this.getLib('setData', path, Buffer.from(data), version);
   }
 
   /**
@@ -314,24 +309,15 @@ export class ZkHelper {
    * @param watcher
    */
   public getData(path: string, watcher?: Function): Promise<unknown> {
-    let resolve: Function | null = null,
-      reject: Function | null = null;
-    this.client.getData(path, watcher, (error: any, data: any) => {
-      if (error) {
-        if (typeof reject === 'function') {
-          reject(error);
-        } else {
-          typeof watcher === 'function' && watcher('error');
-        }
-        (reject = null), (resolve = null);
-        return;
-      }
-      typeof resolve === 'function' && resolve(data.toString('utf8'));
-      (reject = null), (resolve = null);
-    });
-    return new Promise((res, rej) => {
-      (resolve = res), (reject = rej);
-    });
+    return this.getLib('getData', path).then((data: any) => Promise.resolve(data.toString('utf8')));
+    // return this.getLib('getData',path,async () => {
+    //   try{
+    //     const result = await this.getData(path,watcher)
+    //     typeof watcher === "function" && watcher(null,result)
+    //   }catch(err){
+    //     typeof watcher === "function" && watcher(err)
+    //   }
+    // }).then((data:any) => Promise.resolve(data.toString('utf8')))
   }
 
   /**
@@ -341,70 +327,35 @@ export class ZkHelper {
     if (!this.client) {
       throw new Error('请初始化zookeeper client.');
     }
-    this.client.on('connected', () => {
+    this.client.removeAllListeners('connected').on('connected', () => {
       this.logger.log(
         `[zookeeper-listener] zookeeper is connected. sessionID:${this.client.getSessionId().toString('hex')}`,
       );
     });
-    this.client.on('disconnected', () => {
+    this.client.removeAllListeners('disconnected').on('disconnected', () => {
       this.logger.log(`zookeeper is disconnected`);
     });
     this.client.on('expired', () => {
       this.logger.log(`zookeeper is expired`);
     });
-    this.client.on('connectedReadOnly', () => {
+    this.client.removeAllListeners('connectedReadOnly').on('connectedReadOnly', () => {
       this.logger.log(
         `[zookeeper-listener] zookeeper is connectedReadOnly. sessionID:${this.client.getSessionId().toString('hex')}`,
       );
     });
-    this.client.on('authenticationFailed', () => {
+    this.client.removeAllListeners('authenticationFailed').on('authenticationFailed', () => {
       this.logger.log(`authentication failed of zookeeper`);
     });
-    this.client.on('state', (state: any) => {
+    this.client.removeAllListeners('state').on('state', (state: any) => {
       this.logger.log(`state is change of zookeeper. state:${state}`);
+    });
+
+    process.removeAllListeners('uncaughtException').on('uncaughtException', (err: any) => {
+      this.logger.error('Error caught in uncaughtException event:', err);
     });
     // process.on('SIGINT',this.close.bind(this))
     // process.on('uncaughtException',this.close.bind(this))
     // process.on('SIGTERM', this.close.bind(this))
-  }
-
-  /**
-   * 创建zk客户端
-   * @param options
-   */
-  public createServer() {
-    if (this.client) {
-      return this.client;
-    }
-    //和配置文件拿到相关配置
-    this.client = createClient(this.config.get('SERVERS'), {
-      sessionTimeout: Number(this.config.get<number>('SESSIONTIMEOUT')),
-      spinDelay: Number(this.config.get<number>('SPINDELAY')),
-      retries: Number(this.config.get<number>('RETRIES')),
-    });
-    this.listener();
-    return this.client;
-  }
-
-  /**
-   * 连接
-   */
-  public connect(): Promise<unknown> {
-    let resolve: Function, reject: Function, timeHandler: any;
-    if (!this.client) {
-      this.createServer();
-    }
-    this.client.once('connected', () => {
-      resolve != empty && resolve(), (reject = resolve = empty), timeHandler && clearTimeout(timeHandler);
-    });
-    this.client.connect();
-    //连接30秒超时
-    timeHandler = setTimeout(() => {
-      reject && reject(), (reject = resolve = empty);
-    }, 30 * 1000);
-    return new Promise((res, rej) => {
-      (resolve = res), (reject = rej);
-    });
   }
 
   /**

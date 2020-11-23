@@ -797,8 +797,8 @@
         "affectsGlobalScope": false
       },
       "../src/common/zookeeper/zk.helper.ts": {
-        "version": "f71301e18609ec1cfc4567492e82a2a8d57d403f720f6697b680b587e9d2403c",
-        "signature": "f2d2a41e25c0a11e802765d355978724fcd7eaaff28e0fb81744e8035a67677c",
+        "version": "b2ae0611ddf552100e4c06809375b29e681b9c806710be3d78784fd9d0abe426",
+        "signature": "bd1527e1cf11fcd823d54abe61e32f280195afd23ab5b3f90c69b87259b0050e",
         "affectsGlobalScope": false
       },
       "../src/common/system/cpu.ts": {
@@ -1343,7 +1343,7 @@
       },
       "../src/provider/server.ts": {
         "version": "7a2dc1e587ffb9182bc95231d2935fd8853d56bf86bff00c5ee96bbea9d577da",
-        "signature": "0f664f1c0a67ce3cb5b2ba3eb6a79ba25a5af23809b44d9e6533826e947d968a",
+        "signature": "fdbff1a54b4f38fd41fa3089baf43e1381db3909ba56d1d5a00e2da66ba85c57",
         "affectsGlobalScope": false
       },
       "../src/common/balancers/balance.manage.interface.ts": {
@@ -1362,12 +1362,12 @@
         "affectsGlobalScope": false
       },
       "../src/consumer/client.ts": {
-        "version": "3a963822a220808555200a3bd4dd27d2e157ba1e541f3246a14de2f28184d047",
+        "version": "c5efa3bfe42acf80ee7f3c30f71f595041fdcdf1074fb24f2f4817d39840799b",
         "signature": "b864020a9033a0ea303c9e883d71273b5107211eb5f7be9bd7319dd74caa3f17",
         "affectsGlobalScope": false
       },
       "../src/index.ts": {
-        "version": "3ffda8579cbb3777d55e18f6b16529804b8dbe29c81fecacbfec906bf8cfe14a",
+        "version": "ea0ce571358e9c9d9997112e52ed9fb368ff2809d6cbfe292f8d86eff3c38abf",
         "signature": "48dae0a7032c7329c41a6e11997c8e96bff3ac8423486db472053f2b0fbd2153",
         "affectsGlobalScope": false
       },

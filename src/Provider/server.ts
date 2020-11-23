@@ -119,7 +119,7 @@ export class CenterService {
    * 定时任务
    */
   private nextTick(polling: number = 60 * 1000) {
-    return timer(0,polling)
+    return timer(0, polling)
       .pipe(
         // 如果系统状态不好， 就不在返回注册列表进行注册
         switchMap((num) => of(this.systemState ? [] : Array.from(this.liveHeadTask.values()))),
