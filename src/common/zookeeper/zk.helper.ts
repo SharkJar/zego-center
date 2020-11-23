@@ -2,7 +2,7 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-08-25 14:00:41
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-11-23 17:36:10
+ * @Last Modified time: 2020-11-23 18:04:22
  */
 import { Client, createClient, CreateMode, ACL, Permission, Id } from 'node-zookeeper-client';
 import { BusinessLogger } from '../logger/logger';
@@ -176,16 +176,16 @@ export class ZkHelper {
     this.callLib(methodName, ...args, (error: any, result: any, stat: any) => {
       // 有错误
       if (error) {
-        // // 打印日志
-        // this.logger.error(
-        //   `[ZkHelper-initConstructor] \r\n 调用方法:${methodName} 调用方法参数:${JSON.stringify(args)} 调用出错${error}`,
-        // );
+        // 打印日志
+        this.logger.error(
+          `[ZkHelper-initConstructor] \r\n 调用方法:${methodName} 调用方法参数:${JSON.stringify(args)} 调用出错${error}`,
+        );
         return promiseError(error);
       }
-      // // 打印日志
-      // this.logger.log(
-      //   `[ZkHelper-initConstructor] \r\n 调用方法:${methodName} 调用方法参数:${JSON.stringify(args)} 返回结果:${JSON.stringify(result)}`,
-      // );
+      // 打印日志
+      this.logger.log(
+        `[ZkHelper-initConstructor] \r\n 调用方法:${methodName} 调用方法参数:${JSON.stringify(args)} 返回结果:${JSON.stringify(result)}`,
+      );
       // 返回成功
       promiseSuccess(result);
     }).catch(promiseError);
@@ -351,7 +351,7 @@ export class ZkHelper {
     });
 
     process.removeAllListeners('uncaughtException').on('uncaughtException', (err: any) => {
-      this.logger.error('Error caught in uncaughtException event:', err);
+      this.logger.log('Error caught in uncaughtException event:', err);
     });
     // process.on('SIGINT',this.close.bind(this))
     // process.on('uncaughtException',this.close.bind(this))
