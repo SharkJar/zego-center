@@ -21,8 +21,8 @@ export declare class CenterService {
     private intervalSystemState;
     private intervalSystemWeight;
     private nextTick;
-    register(params: registerConfig): Promise<any>;
-    unregister(params: registerConfig): Promise<any>;
+    register(params: registerConfig): Promise<unknown>;
+    unregister(params: registerConfig): Promise<unknown>;
     private registerZK;
     private unRegisterZK;
 }
