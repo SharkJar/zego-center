@@ -2,7 +2,7 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-09-01 10:50:22
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-11-23 17:19:40
+ * @Last Modified time: 2020-11-24 11:28:02
  */
 import { ZkHelper } from '../common/zookeeper/zk.helper';
 import { Injectable } from 'zego-injector';
@@ -13,7 +13,7 @@ import { BusinessLogger } from '../common/logger/logger';
 import { WeightRoundRobin } from '../common/balancers/balance.weight.round.robin';
 import fastSafeStringify from 'fast-safe-stringify';
 import { Subject, from, Subscription, fromEvent, of, timer } from 'rxjs';
-import { retry, tap, switchMap, debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
+import { retry, tap, switchMap, debounceTime, distinctUntilChanged, map, scan, filter } from 'rxjs/operators';
 
 type subscibeConfig = {
   // 属于哪个系统
@@ -109,7 +109,11 @@ export class CenterClient extends Event.EventEmitter {
 
     // 节点被删除
     fromEvent(this, `${eventName.NODE_CHILD_DELETE}:${serverPath}`)
-      .pipe(map((event) => null))
+      .pipe(
+        scan((acc) => acc + 1, 0),
+        filter((num) => num > 1),
+        map((event) => null),
+      )
       .subscribe(noticeSubject);
     // 单节点被删除
     fromEvent(this, `${eventName.CHILDNODE_DELETE}:${serverPath}`)

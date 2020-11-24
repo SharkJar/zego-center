@@ -1362,12 +1362,12 @@
         "affectsGlobalScope": false
       },
       "../src/consumer/client.ts": {
-        "version": "98ce13183a69e9425ee13400daa491db05f9af0ac79d09dd554625878862e609",
+        "version": "da2f5b84a5ff34eff22f75cf4668b154ad8daf4c915551445a0e9fb39ca8d1b9",
         "signature": "b864020a9033a0ea303c9e883d71273b5107211eb5f7be9bd7319dd74caa3f17",
         "affectsGlobalScope": false
       },
       "../src/index.ts": {
-        "version": "ea0ce571358e9c9d9997112e52ed9fb368ff2809d6cbfe292f8d86eff3c38abf",
+        "version": "ecedaf92c1ed94ab6d0a317c7507e9413273e91ea49a963746ef7422dab96ba5",
         "signature": "48dae0a7032c7329c41a6e11997c8e96bff3ac8423486db472053f2b0fbd2153",
         "affectsGlobalScope": false
       },

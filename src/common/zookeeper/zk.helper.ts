@@ -178,13 +178,17 @@ export class ZkHelper {
       if (error) {
         // 打印日志
         this.logger.error(
-          `[ZkHelper-initConstructor] \r\n 调用方法:${methodName} 调用方法参数:${JSON.stringify(args)} 调用出错${error}`,
+          `[ZkHelper-initConstructor] \r\n 调用方法:${methodName} 调用方法参数:${JSON.stringify(
+            args,
+          )} 调用出错${error}`,
         );
         return promiseError(error);
       }
       // 打印日志
       this.logger.log(
-        `[ZkHelper-initConstructor] \r\n 调用方法:${methodName} 调用方法参数:${JSON.stringify(args)} 返回结果:${JSON.stringify(result)}`,
+        `[ZkHelper-initConstructor] \r\n 调用方法:${methodName} 调用方法参数:${JSON.stringify(
+          args,
+        )} 返回结果:${JSON.stringify(result)}`,
       );
       // 返回成功
       promiseSuccess(result);
