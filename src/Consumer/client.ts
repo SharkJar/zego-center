@@ -109,11 +109,7 @@ export class CenterClient extends Event.EventEmitter {
 
     // 节点被删除
     fromEvent(this, `${eventName.NODE_CHILD_DELETE}:${serverPath}`)
-      .pipe(
-        scan((acc) => acc + 1, 0),
-        filter((num) => num > 1),
-        map((event) => null),
-      )
+      .pipe(map((event) => null))
       .subscribe(noticeSubject);
     // 单节点被删除
     fromEvent(this, `${eventName.CHILDNODE_DELETE}:${serverPath}`)

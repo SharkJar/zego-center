@@ -125,6 +125,7 @@ export class ZkHelper {
     if (isConnected) {
       return Promise.resolve();
     }
+    console.log('connect 12312312');
     // 创建一个promise回调
     const { timeout, success, error, promise } = this.createPromise();
     // 连接成功
@@ -331,6 +332,7 @@ export class ZkHelper {
     if (!this.client) {
       throw new Error('请初始化zookeeper client.');
     }
+    console.log('进入listener 123123');
     this.client.removeAllListeners('connected').on('connected', () => {
       this.logger.log(
         `[zookeeper-listener] zookeeper is connected. sessionID:${this.client.getSessionId().toString('hex')}`,
