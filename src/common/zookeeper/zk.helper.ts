@@ -2,7 +2,7 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-08-25 14:00:41
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-12-01 14:41:46
+ * @Last Modified time: 2020-12-01 16:27:50
  */
 import { Client, createClient, CreateMode, ACL, Permission, Id } from 'node-zookeeper-client';
 import { BusinessLogger } from '../logger/logger';
@@ -72,6 +72,8 @@ export class ZkHelper {
     if (this.isStartConnect) {
       return;
     }
+
+    this.isStartConnect = true
     const isConnected = this.hasConnect();
     // 如果已经是连接状态 就不在重复连接
     if (isConnected) {
@@ -90,7 +92,13 @@ export class ZkHelper {
     } catch (err) {
       error(err);
     }
-    promise.then(this.startTask).catch(this.startTaskError);
+    promise.then(() => {
+      this.startTask()
+      this.isStartConnect = false
+    }).catch((err) => {
+      this.startTaskError(err)
+      this.isStartConnect = false
+    });
   }
   /**
    * 调用node-zookeeper-client方法
