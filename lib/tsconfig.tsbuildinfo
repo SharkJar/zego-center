@@ -476,6 +476,31 @@
         "signature": "a5ce487fd6744a3f97eaed67b65c83c0b07f05b2de65393d70dc28e8309878e8",
         "affectsGlobalScope": false
       },
+      "../src/common/zookeeper/zk.helper.ts": {
+        "version": "b23459309c03db654cf0e84add723a72627bbeccc42c1985cdd16eb8e1df27a1",
+        "signature": "2059552ded48657da57becabc0b3916d22873584b60c8a9ac91b70c3e1f98f71",
+        "affectsGlobalScope": false
+      },
+      "../src/common/system/cpu.ts": {
+        "version": "2bf69535c86b3a8902603bd479f2d03f78e747967b82c39a3ae5e9b4788f9aaf",
+        "signature": "0c3d9b0d07a469a51eb4fb6f5c57a5866f9a889142e6f320a535b134250f2871",
+        "affectsGlobalScope": false
+      },
+      "../src/common/system/loadavg.ts": {
+        "version": "4bebbb979dc5a693d3cf59d2323f526c7cf8afa6e541bbf9c0f13bedf5656ad5",
+        "signature": "709f45ddd40b592e34659eafb4a06b979a59393e99b2494feec2af8b6d74b3cd",
+        "affectsGlobalScope": false
+      },
+      "../src/common/system/memory.ts": {
+        "version": "f525ee6202d56553389131cd03319ace038462bbd7236336a439ec86f849199e",
+        "signature": "36e2309ec0c3def517b2249dc967eae7b9e0a1be863b33efb4efec93012f8268",
+        "affectsGlobalScope": false
+      },
+      "../src/common/system/system.weight.ts": {
+        "version": "1ba49e6422d8d2172e6982f28f63e3e57ac2d9e8f511f5642f49bf51f59d0488",
+        "signature": "9461305796499cc686d0cbdd8dda922ba98882b19adbef6e5d2ffd683b31dc2b",
+        "affectsGlobalScope": false
+      },
       "../node_modules/rxjs/internal/subscription.d.ts": {
         "version": "6cb35d83d21a7e72bd00398c93302749bcd38349d0cc5e76ff3a90c6d1498a4d",
         "signature": "6cb35d83d21a7e72bd00398c93302749bcd38349d0cc5e76ff3a90c6d1498a4d",
@@ -794,31 +819,6 @@
       "../node_modules/rxjs/index.d.ts": {
         "version": "a588d0765b1d18bf00a498b75a83e095aef75a9300b6c1e91cbf39e408f2fe2f",
         "signature": "a588d0765b1d18bf00a498b75a83e095aef75a9300b6c1e91cbf39e408f2fe2f",
-        "affectsGlobalScope": false
-      },
-      "../src/common/zookeeper/zk.helper.ts": {
-        "version": "48f108d16108d6ce0c1b5ebbd071453fa31300c812705d95c570416d29814fd7",
-        "signature": "bd1527e1cf11fcd823d54abe61e32f280195afd23ab5b3f90c69b87259b0050e",
-        "affectsGlobalScope": false
-      },
-      "../src/common/system/cpu.ts": {
-        "version": "2bf69535c86b3a8902603bd479f2d03f78e747967b82c39a3ae5e9b4788f9aaf",
-        "signature": "0c3d9b0d07a469a51eb4fb6f5c57a5866f9a889142e6f320a535b134250f2871",
-        "affectsGlobalScope": false
-      },
-      "../src/common/system/loadavg.ts": {
-        "version": "4bebbb979dc5a693d3cf59d2323f526c7cf8afa6e541bbf9c0f13bedf5656ad5",
-        "signature": "709f45ddd40b592e34659eafb4a06b979a59393e99b2494feec2af8b6d74b3cd",
-        "affectsGlobalScope": false
-      },
-      "../src/common/system/memory.ts": {
-        "version": "f525ee6202d56553389131cd03319ace038462bbd7236336a439ec86f849199e",
-        "signature": "36e2309ec0c3def517b2249dc967eae7b9e0a1be863b33efb4efec93012f8268",
-        "affectsGlobalScope": false
-      },
-      "../src/common/system/system.weight.ts": {
-        "version": "1ba49e6422d8d2172e6982f28f63e3e57ac2d9e8f511f5642f49bf51f59d0488",
-        "signature": "9461305796499cc686d0cbdd8dda922ba98882b19adbef6e5d2ffd683b31dc2b",
         "affectsGlobalScope": false
       },
       "../node_modules/rxjs/internal/operators/audit.d.ts": {
@@ -1367,7 +1367,7 @@
         "affectsGlobalScope": false
       },
       "../src/index.ts": {
-        "version": "d24025b8064290c0f58eabb1257942a091ddbe5fc2e1baa34cd44e18fe320ee3",
+        "version": "4957aba112a83d50c8dcd29b82a225d65a6261543911af95768c5faff4d2ae93",
         "signature": "48dae0a7032c7329c41a6e11997c8e96bff3ac8423486db472053f2b0fbd2153",
         "affectsGlobalScope": false
       },
@@ -4837,7 +4837,6 @@
         "../node_modules/@types/node/ts3.4/fs.d.ts",
         "../node_modules/@types/node/ts3.4/process.d.ts",
         "../node_modules/@types/node/ts3.4/util.d.ts",
-        "../node_modules/rxjs/index.d.ts",
         "../node_modules/zego-config/lib/index.d.ts",
         "../node_modules/zego-injector/lib/index.d.ts",
         "../src/common/logger/logger.ts"

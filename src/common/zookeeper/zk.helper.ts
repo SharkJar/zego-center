@@ -2,13 +2,12 @@
  * @Author: Johnny.xushaojia
  * @Date: 2020-08-25 14:00:41
  * @Last Modified by: Johnny.xushaojia
- * @Last Modified time: 2020-11-23 19:14:41
+ * @Last Modified time: 2020-12-01 14:41:46
  */
 import { Client, createClient, CreateMode, ACL, Permission, Id } from 'node-zookeeper-client';
 import { BusinessLogger } from '../logger/logger';
 import { Injectable } from 'zego-injector';
 import { ConfigService } from 'zego-config';
-import { Observable, Subject, BehaviorSubject } from 'rxjs';
 
 const empty = () => {};
 //zookeeper的辅助
@@ -29,8 +28,70 @@ export class ZkHelper {
   [name: string]: any;
   //zookeeper client
   private client!: any;
+  private tasks: { method: string; args: any[]; success: Function; error: Function }[] = [];
+  private isStartConnect: boolean = false;
   constructor(private logger: BusinessLogger, private config: ConfigService) {}
 
+  /**
+   * 连接成功之后 执行队列
+   */
+  private startTask() {
+    while (this.tasks.length) {
+      const task = this.tasks.shift();
+      if (!task) {
+        continue;
+      }
+      const { method, args, success, error } = task;
+      try {
+        const result = this.client[method](...args);
+        typeof success === 'function' && success(result);
+      } catch (err) {
+        typeof error === 'function' && error(err);
+      }
+    }
+  }
+  /**
+   * 连接失败之后 执行队列
+   * @param err
+   */
+  private startTaskError(err: any) {
+    while (this.tasks.length) {
+      const task = this.tasks.shift();
+      if (!task) {
+        continue;
+      }
+      const { error } = task;
+      typeof error === 'function' && error(err);
+    }
+  }
+  /**
+   * 连接zk
+   */
+  private connect() {
+    // 已经开始连接了 不在重复处理
+    if (this.isStartConnect) {
+      return;
+    }
+    const isConnected = this.hasConnect();
+    // 如果已经是连接状态 就不在重复连接
+    if (isConnected) {
+      return this.startTask();
+    }
+    console.log('start connect');
+    // 创建一个promise回调
+    const { timeout, success, error, promise } = this.createPromise();
+    // 连接成功
+    this.client.once('connected', success);
+    try {
+      // 开始连接
+      this.client.connect();
+      // timeout
+      timeout();
+    } catch (err) {
+      error(err);
+    }
+    promise.then(this.startTask).catch(this.startTaskError);
+  }
   /**
    * 调用node-zookeeper-client方法
    */
@@ -44,15 +105,18 @@ export class ZkHelper {
     }
     // 创建一个promise回调
     const { timeout, success, error, promise } = this.createPromise();
-    // 创建连接
-    this.connect()
-      .then(() => {
-        const result = this.client[methodName](...args);
-        // 调用成功
-        success(result);
-      })
-      .catch(error);
-    // 返回promise
+    // 判断连接状态
+    const isConnected = this.hasConnect();
+
+    if (isConnected) {
+      const result = this.client[methodName](...args);
+      // 调用成功
+      success(result);
+    } else {
+      this.tasks.push({ method: methodName, success, error, args });
+      this.connect();
+    }
+
     return promise;
   }
 
@@ -63,7 +127,7 @@ export class ZkHelper {
     const state = this.getState() as any;
     const stateName = state.getName();
     // 打印日志
-    // this.logger.log(`[ZkHelper-hasConnect] \r\n zookeeper state:${stateName}`);
+    this.logger.log(`[ZkHelper-hasConnect] \r\n zookeeper state:${stateName}`);
     // 处于连接状态
     return ['CONNECTED_READ_ONLY', 'SYNC_CONNECTED', 'SASL_AUTHENTICATED'].includes(stateName);
   }
@@ -114,31 +178,6 @@ export class ZkHelper {
       success,
       error,
     };
-  }
-
-  /**
-   * 连接zk
-   */
-  private connect() {
-    const isConnected = this.hasConnect();
-    // 如果已经是连接状态 就不在重复连接
-    if (isConnected) {
-      return Promise.resolve();
-    }
-    console.log('connect 12312312');
-    // 创建一个promise回调
-    const { timeout, success, error, promise } = this.createPromise();
-    // 连接成功
-    this.client.once('connected', success);
-    try {
-      // 开始连接
-      this.client.connect();
-      // timeout
-      timeout();
-    } catch (err) {
-      error(err);
-    }
-    return promise;
   }
 
   /**
@@ -357,7 +396,7 @@ export class ZkHelper {
     });
 
     process.removeAllListeners('uncaughtException').on('uncaughtException', (err: any) => {
-      this.logger.log('Error caught in uncaughtException event:', err);
+      this.logger.log('Error caught in uncaughtException event:', JSON.stringify(err));
     });
     // process.on('SIGINT',this.close.bind(this))
     // process.on('uncaughtException',this.close.bind(this))

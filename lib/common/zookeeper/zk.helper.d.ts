@@ -11,11 +11,15 @@ export declare class ZkHelper {
     private config;
     [name: string]: any;
     private client;
+    private tasks;
+    private isStartConnect;
     constructor(logger: BusinessLogger, config: ConfigService);
+    private startTask;
+    private startTaskError;
+    private connect;
     private callLib;
     private hasConnect;
     private createPromise;
-    private connect;
     getState(): any;
     createServer(): any;
     private getLib;
